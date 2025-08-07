@@ -1,0 +1,9 @@
+Timestamp	Screen	Notes
+14:12:43	215	
+14:14:42	235	
+14:22:59	545	420 screen out dipole off
+14:23:35	620	
+14:23:56	730	
+14:24:39	810	Fiber being more stretched more downstream of the beamline
+14:31:42	910	""""""
+		
