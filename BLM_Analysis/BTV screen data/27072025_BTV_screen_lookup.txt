@@ -1,0 +1,16 @@
+Timestamp	Screen	Notes
+14:11:24	01	"With pre-scatterer and conical-shape scatterer in place, all the rest below like this"
+14:12:43	215	
+14:14:42	235	
+14:16:27	3901	YAG
+14:20:40	400	
+14:20:59	400420	Long beam longitudinally means that the beam size becomes large from dispersion once going through a dipole (or steering magnet too). So we get the beam size being larger than the beam
+14:22:59	545	420 screen out dipole off
+14:23:35	620	
+14:23:56	730	
+14:24:39	810	Fiber being more stretched more downstream of the beamline
+14:25:24	3902	OTR
+14:26:30	3903	CHROMOX
+14:29:28	02	"Without pre-scatterer not conical-shaped scatterer, all the rest below like this"
+14:31:42	910	""""""
+		

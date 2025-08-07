@@ -1,0 +1,88 @@
+\documentclass{article}
+\pagestyle{empty}
+
+\usepackage[a4paper,margin=1cm]{geometry}
+%\usepackage{showframe} % DO NOT COMBINE WITH TIKZexternalize
+
+\usepackage{tikz}
+
+% \usepackage{etoolbox}
+
+%Set/get variables, see https://tex.stackexchange.com/a/37113
+\usepackage{pgfkeys}
+\newcommand{\setvalue}[1]{\pgfkeys{/variables/#1}}
+\newcommand{\getvalue}[1]{\pgfkeysvalueof{/variables/#1}}
+\newcommand{\declare}[1]{%
+  \pgfkeys{
+    /variables/#1.is family,
+    /variables/#1.unknown/.style = {\pgfkeyscurrentpath/\pgfkeyscurrentname/.initial = ##1}
+  }%
+}
+\declare{} %Setup the /variables directory
+
+% set up externalization (COMMENT OUT FOR DEBUGGING!)
+\usetikzlibrary{external}
+\tikzexternalize[prefix=./outputLayout/]
+
+% load macros
+\input{./inputLayout/BEAMLINE_TIKZMACROS.tex}
+
+% document with single figures
+\begin{document}
+
+\section{CLEAR beamline layout drawings}
+This file is used to generate the ``split'' drawings, 1 A4 page wide.
+When tikzexternalize is on, output is saved to folder \texttt{outputLayout\_unbroken}.
+See README.md for more information.
+
+\noindent\makebox[\linewidth]{\rule{\linewidth}{1.0pt}}
+
+\setvalue{unbroken = 0} %Do draw VESPER dipole in EXPERIMENTAL1 etc.
+
+%\newpage
+\subsection{All text ON, show legend}
+\begin{center}
+  \setvalue{distances = 1}
+  \setvalue{elemnames = 1}
+  \setvalue{auxElems  = 1}
+  \begin{tikzpicture}
+    \input{./inputLayout/CALIFES.tex}
+  \end{tikzpicture}
+  \begin{tikzpicture}
+    \input{./inputLayout/EXPERIMENTAL1.tex}
+  \end{tikzpicture}
+  \input{./inputLayout/LEGEND.tex}
+\end{center}
+\noindent\makebox[\linewidth]{\rule{\linewidth}{1.0pt}}
+
+%\newpage
+\subsection{Simplified (no distances or element names)}
+\begin{center}
+  \setvalue{distances = 0}
+  \setvalue{elemnames = 1}
+  \setvalue{auxElems  = 1}
+  \begin{tikzpicture}
+    \input{./inputLayout/CALIFES.tex}
+  \end{tikzpicture}
+  \begin{tikzpicture}
+    \input{./inputLayout/EXPERIMENTAL1.tex}
+  \end{tikzpicture}
+\end{center}
+\noindent\makebox[\linewidth]{\rule{\linewidth}{1.0pt}}
+
+\newpage
+\subsection{Beamline only (no distances, element names, RF, or laser)}
+\begin{center}
+  \setvalue{distances = 0}
+  \setvalue{elemnames = 0}
+  \setvalue{auxElems  = 0}
+  \begin{tikzpicture}
+    \input{./inputLayout/CALIFES.tex}
+  \end{tikzpicture}
+  \begin{tikzpicture}
+    \input{./inputLayout/EXPERIMENTAL1.tex}
+  \end{tikzpicture}
+\end{center}
+\noindent\makebox[\linewidth]{\rule{\linewidth}{1.0pt}}
+
+\end{document}

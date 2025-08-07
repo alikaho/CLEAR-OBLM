@@ -1,0 +1,219 @@
+%% TIKZ DRAWING OF CLEAR EXPERIMENTAL BEAMLINE 1 ELEMENTS
+%% TO BE INCLUDED INTO A LATEX DOCUMENT
+%% INSIDE A TIKZPICTURE ENVIRONMENT
+%% K. Sjobak, 2018--2020, D. Gamba 2020
+%% Updated L.A. Dyks - removed CLIC BPMs
+
+    \if\getvalue{elemnames}1
+        \pgfmathsetmacro{\BotLegyOFF}{0.0};
+    \else
+        \pgfmathsetmacro{\BotLegyOFF}{1.3};
+    \fi
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %% GREEN Areas to indicate experiments
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    %BEAM INSTRUMENTATION TEST STAND AREA
+    \filldraw[green] (11.05,-0.4) rectangle (13.5,0.4);
+    \node at ({(11.3+13.7)/2},-2.25+\BotLegyOFF) {\textbf{BI test area}};
+
+    %CLIC test area
+    \filldraw[green] (10.65,-0.5) rectangle (6.65,0.5);
+    \node at ({(10.3+7.8)/2},-2.25+\BotLegyOFF) {\textbf{CLIC test area}};
+
+    %IN-AIR table
+    \filldraw[green] (-0.6,-0.5) rectangle (0.5,0.5);
+    \node[align=left,anchor=west] at (-0.7,1.4) {\textbf{In-Air}\\ \textbf{test area}};
+
+    % PLASMA LENS
+    \filldraw[green] (3.55,-0.7) rectangle (4.6,0.7);
+    \node at (4.4,-2.25+\BotLegyOFF) {\textbf{Plasma lens}};
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    % FINAL DUMP
+    \if\getvalue{elemnames}1
+        \filldraw[gray] (-0.6,-2.0) rectangle (-0.5,0.5);
+    \else
+        \filldraw[gray] (-0.6,-1.2) rectangle (-0.5,0.5);
+    \fi
+
+    %THE BEAM
+    \draw[latex-,ultra thick] (-0.3,0)--(16,0);
+
+    % \kickerHV[0]{15.8}{BHB 400}{1}{blue};
+    \if\getvalue{unbroken}0
+        \dipole[0]{15.8}{BHB 400}{{10}};
+    \fi
+
+
+    \lensF{15.4}{QFD 510};
+    \lensD{15.0}{QDD 515};
+    \lensF{14.6}{QFD 520};
+    \if\getvalue{distances}1
+        \node at (15.0,1) {\belemsiz 22.86~m};
+    \fi
+
+    \iBPM{14.2}{BPM 530};
+
+    \correctorMagnet{13.8}{DJ 540};
+    \if\getvalue{distances}1
+        \node at (13.8,1) {\belemsiz 23.98~m};
+    \fi
+
+    \BTV{13.1}{BTV 545};
+
+    \filldraw[purple] (12.5+0.15,0.15) rectangle (12.5-0.15,-0.15);
+    \if\getvalue{elemnames}1
+        \node[rotate=-90,anchor=west] at (12.5,-0.7)
+            {\belemsiz WCM 550};
+    \fi
+
+    \correctorMagnet{12.2}{DJ 590};
+    \if\getvalue{distances}1
+        \node at (12.4,1) {\belemsiz 25.21~m};
+    \fi
+
+    \iBPM{11.8} {BPM 595}; %{BPM 560};
+
+    \filldraw[purple] (11.3+0.15,0.15) rectangle (11.3-0.15,-0.15);
+    \if\getvalue{elemnames}1
+        \node[rotate=-90,anchor=west] at (11.3,-0.7)
+            {\belemsiz BPR 600};
+    \fi
+
+    %\cBPM{11.1}{BPC 565}{0.15};
+    \cBPM{10.85}{BPC 610}{0.15};
+
+    \BTV{10.25}{BTV 620};
+    \if\getvalue{distances}1
+        \node at (10.5,1) {\belemsiz 26.04~m};
+    \fi
+
+    \filldraw[ultra thick, orange] (9.80,-0.15) rectangle (9.35,0.15);
+    \if\getvalue{elemnames}1
+        \node[rotate=-90,anchor=west] at (9.45,-0.7)
+            {\belemsiz ACS 640};
+    \fi
+
+    \filldraw[ultra thick, orange] (9.25,-0.15) rectangle (8.80,0.15);
+    \filldraw[purple] (9.1,-0.4) rectangle (9.05,0.4);
+    \if\getvalue{elemnames}1
+        \node[rotate=-90,anchor=west,align=left] at (8.95,-0.7)
+            {\belemsiz WFM 645\\[-0.3em]
+             \belemsiz ACS 650};
+    \fi
+
+    %\cBPM{9.0}{BPC 660}{0.1};
+    %\cBPM{8.7}{BPC 670}{0.1};
+    %\cBPM{8.4}{BPC 680}{0.1};
+    %\cBPM{8.1}{BPC 690}{0.1};
+
+    \iBPM{8.45}{BPM 690};
+
+    \correctorMagnet{8.05}{DJ 710};
+    \if\getvalue{distances}1
+        \node at (8.0,0.9) {\belemsiz 29.31~m};
+    \fi
+    
+
+    \cBPM{7.65}{BPC 720}{0.15};
+
+    \BTV{7.05}{BTV 730};
+    \if\getvalue{distances}1
+        \node at (7.15,0.65) {\belemsiz 29.75~m};
+    \fi
+
+    \lensF{6.35}{QFD 760};
+    \lensD{5.95}{QDD 765};
+    \lensF{5.55}{QFD 770};
+    \if\getvalue{distances}1
+        \node at (5.95,0.9) {\belemsiz 30.62~m};
+    \fi
+
+
+    \correctorMagnet{5.2}{DJ 780};
+    \if\getvalue{distances}1
+        \node at (5.2,1.15) {\belemsiz 31.66~m};
+    \fi
+
+    \cBPM{4.9}{BPC 790}{0.15};
+
+    \lensF[green!30]{4.4}{PLC 800\\[-0.5em]
+             \belemsiz BTV 800\\[-0.5em]
+             \belemsiz BTV 805};
+    \if\getvalue{distances}1
+        \node at (4.4,0.9) {\belemsiz 32.26~m};
+    \fi
+
+    \BTV{3.9}{BTV 810};
+    \if\getvalue{distances}1
+        \node at (3.9,1.15) {\belemsiz 32.53~m};
+    \fi
+
+    \iBPM{3.3}{BPM 820};
+
+    \correctorMagnet{2.95}{DJ 840};
+    \if\getvalue{distances}1
+        \node at (2.95,0.9) {\belemsiz 33.38~m};
+    \fi
+
+    \lensD{2.60}{QDD 870};
+    \if\getvalue{distances}1
+        \node at (2.35,1.15) {\belemsiz 33.92~m};
+    \fi
+    \lensF{2.2}{QFD 880};
+    
+    \iBPM{1.8}{BPM 890};
+    %% IN-AIR SPECTROMETER
+
+    \pgfmathsetmacro{\InAirStart}{1.3};
+    \pgfmathsetmacro{\InAirAngle}{-22.0};
+    \pgfmathsetmacro{\InAirY}{(\InAirStart+0.6)*tan(\InAirAngle)};
+
+    \draw[-latex,ultra thick] (\InAirStart,0)--(-0.6,\InAirY);
+
+    %\kickerHV[0]{\InAirStart}{BHB 900}{1}{blue};
+    \dipole[0]{\InAirStart}{BHB 900}{{-\InAirAngle/2}};
+
+    \if\getvalue{distances}1
+        \node at (\InAirStart,0.9) {\belemsiz 35.03~m};
+    \fi
+
+    \pgfmathsetmacro{\InAirBTVaX}{0.0};
+    \pgfmathsetmacro{\InAirBTVaY}{(\InAirStart-\InAirBTVaX)*tan(\InAirAngle)};
+    \BTV[\InAirBTVaY]{\InAirBTVaX}{BTV930};
+
+    %\pgfmathsetmacro{\InAirBPMx}{0.5};
+    %\pgfmathsetmacro{\InAirBPMy}{(\InAirStart-\InAirBPMx)*tan(\InAirAngle)};
+    %\iBPM[\InAirBPMy]{\InAirBPMx}{BPM920};
+
+    %% IN-AIR TABLE INSTRUMENTATION
+    \BTV{0.7}{BTV 910};
+%    \node[anchor=south] at (0.9,0.3) {\belemsiz BTV 910};
+
+    %ICT 210
+    \filldraw[purple] (0.3-0.1/2,-0.3) rectangle (0.3+0.1/2,0.3);
+    \if\getvalue{elemnames}1
+        \node[anchor=south] at (0.3,0.45) {\belemsiz ICT 915};
+    \fi
+
+    %% RF SYSTEM
+    \if\getvalue{auxElems}1
+        \filldraw[orange!65] (11.2,0.7) -- (11.2+0.5,1.7) -- (11.2-0.5,1.7) -- cycle;
+        \draw[ultra thick, orange!65,] (11.15,1.45) -- (9.25,1.45);
+        \draw[ultra thick, orange!65, dashed, -latex] (9.25,1.45) -- (9.25,0.2);
+        \draw[ultra thick, orange!65, dashed, -latex] (9.25,1.45) -- (9.25,0.8) -- (9.8,0.8) -- (9.8,0.2);
+        \if\getvalue{elemnames}1
+            \node[align=center,anchor=north] at (11.2,1.7) {\belemsiz MKX\\ \belemsiz 1};
+        \fi
+    \fi
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../layout.tex"
+%%% End:
