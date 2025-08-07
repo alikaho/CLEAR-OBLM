@@ -3,7 +3,6 @@
 ## HELLLO 
 ## HELLO AGAINNn
 
-# sdfjowe
 
 ## Getting started
 
