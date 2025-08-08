@@ -23,8 +23,8 @@ function rise_idx = Find_rise_time_CFD(raw_signal)
 
     if isempty(crossings)
         % if there are no crossings that satisfy the threshold condition,
-        % set rise_idx to 0
-        rise_idx = 0;
+        % set rise_idx to 1 (the first index)
+        rise_idx = 1;
     else
         % if there is one or more crossing, take the crossing that is closest to the maximum
         [~, closest_crossing_idx] = min(abs(crossings - max_idx));

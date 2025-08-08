@@ -10,7 +10,7 @@ date = num2str(27072025);
 refr_idx = 1.465; % silicon refractive index for fiber distance of around 60m. See effective refractive index to see full accounting of fiber distance/attenuation/wavelength etc. 
 
 parent_folder = fileparts(cd); % get the parent folder of this script
-addpath(fullfile(parent_folder, 'BLM_GUI_APP')); % add
+addpath(fullfile(parent_folder, 'BLM_GUI_APP')); % add path with GUI app
 
 % addpath '/nfs/cs-ccr-nfsop/nfs6/vol29/Linux/data/clear/MatLab/Operation/BLM_GUI_2/BLM_GUI_APP'
 

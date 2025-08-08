@@ -1,57 +1,43 @@
 
-% Script analyses the BLM signals from all screens.
-% Plots the reconstructed positions, and pulls the relationship between the
-% reconstructed positions (ALONG THE FIBER) and the actual BTV screen
-% positions (ALONG THE BEAM). These would be expected to give a 1-to-1
-% gradient given the fiber is parallel, 
+% Script analyses the BLM signals from all screens, looking for the reflection signal position in particular.
+% To analyse the reflection signal, we use the downstream rise time conversion function.
+
+
 
 close all
 date = num2str(27072025);
-refr_idx = 1.465; % silicon refractive index minimum (for maximum wavelength). Should be somewhere in between 1.45 and 1.485. Monty uses 1.465
+refr_idx = 1.465; % silicon refractive index for fiber distance of around 60m. See effective refractive index to see full accounting of fiber distance/attenuation/wavelength etc. 
 
 parent_folder = fileparts(cd); % get the parent folder of this script
 addpath(fullfile(parent_folder, 'BLM_GUI_APP')); % add path with GUI app
 
-% copy_data_over("BTV screen data/27072025_BTV_screen_lookup.txt");
 [up_data, down_data, smooth_up_data, smooth_down_data, screens] = get_data(date);
-[rise_indices_up, rise_indices_down] = Find_rise_indices(up_data, down_data);
 
 % cut down to the usable screens
-screens_less_cell = {screens{3}, screens{6:9}};
+screens_less_cell = {screens{1:3}, screens{6:9}};
 screens_less = transpose(str2double(string(screens_less_cell)));
-screen_distances = [20.5964, 24.2259, 25.9344, 29.7544, 32.0174];
-errors_on_distances = [0.001, 0.001, 0.001, 0.4, 0.001, 0.001, 0.001];
-up_data_less = up_data([3, 6:9], :);
-down_data_less = down_data([3, 6:9], :);
+screen_distances = [1.8095, 7.07, 20.5964, 24.2259, 25.9344, 29.7544, 32.0174];
+errors_on_distances = [0.001, 0.3, 0.001, 0.001, 0.001, 0.4, 0.001, 0.001, 0.001];
+up_data_less = up_data([1:3, 6:9], :);
+down_data_less = down_data([1:3, 6:9], :);
 
-rise_indices_up_less = rise_indices_up([3, 6:9]);
-rise_indices_down_less = rise_indices_down([3, 6:9]);
+
+% now cut down to the part of the data that includes the third (reflection) peak
+up_data_peak = up_data_less(:, 850:1000); % 850 to give enough for a background reading in Find_rise_time_CFD.m
+
+% first peak rise indices
+[rise_indices_up_less, rise_indices_down_less] = Find_rise_indices(up_data_less, down_data_less);
+
+% third peak rise indices
+[rise_indices_up_peak, rise_indices_down_peak] = Find_rise_indices(up_data_peak, down_data_less);
 
 Plot_signals(up_data_less, down_data_less, screens_less, rise_indices_up_less, rise_indices_down_less, date);
+Plot_third_peaks(up_data_peak, down_data_less, screens_less, rise_indices_up_peak, rise_indices_down_peak, date);
+
 [gradient, offset] = Plot_reconstructed_positions_combined_readout(rise_indices_up_less, rise_indices_down_less, screens_less, screen_distances, date, refr_idx)
 [gradient, offset] = Plot_reconstructed_positions_upstream(rise_indices_up_less, screens_less, screen_distances, date, refr_idx)
 [gradient, offset] = Plot_reconstructed_positions_downstream(rise_indices_down_less, screens_less, screen_distances, date, refr_idx)
 
-
-function copy_data_over(table)
-    % Copies the data from the Raw BLM data folder and renames to put into
-    % BTV screen data folderp+ offsetre
-    % Call the lookup table between timestamps and screen names
-    unsorted_lookup = readtable(table);
-    lookup = sortrows(unsorted_lookup, 2); % sorts by magnet values
-    timestamps = lookup{:, 1};
-    screens = lookup{:, 2};
-    
-    % % Copy files from the raw data folder to this folder and rename with the
-    % % screen name (will need to change date of the recorded data)
-
-    % copy jpg filesp+ offsetre
-    for i = 1:length(timestamps)
-        copyfile("Raw BLM data/BLM_GUI_data_27072025-" + char(timestamps(i)) + ".jpg", "BTV screen data/BLM_GUI_data_27072025_BTV_" + screens(i) + ".jpg")
-    end
-    
-
-end
 
 
 
@@ -133,17 +119,65 @@ function Plot_signals(up_data, down_data, screens, rise_indices_up, rise_indices
     legend('FontSize', 14)
 
     axis(ax1, [100 1000 -0.05 0.2])
+    axis(ax2, [100 1000 0 0.7])    
+
+%     savefig(f_waveforms, ['Corrector magnet data/BLM_', date, '_Corrector_Magnets_Signal_CFD.fig'])
+    exportgraphics(f_waveforms, ['BTV screen data/BLM_', date, '_BTV_Screens_Waveforms_CFD.png'])
+end
+
+
+
+
+function Plot_third_peaks(up_data, down_data, screens, rise_indices_up, rise_indices_down, date)
+    % Plot the data
+    f_waveforms = figure(2);
+    f_waveforms.Position = [900 500 1400 800];
+    t = tiledlayout(1,2, 'TileSpacing','Compact');
+
+    title(t, 'Beam Loss For BTV Screens Along CLEAR Beamline', fontsize = 18)
+    subtitle(t, 'Third (reflection) peak')
+    C = {'red', 'green', 'blue', 'cyan','black', 'magenta', [1 0.647 0], [128 0 128]/255 }; % cell array of colours
+    
+    time_pts = 1:size(up_data, 2) + 850; 
+
+    % up data
+    ax1 = nexttile;
+    hold on
+    for i = 1:length(screens)
+        plot(time_pts, up_data(i, :), 'Color', C{i}, 'DisplayName', ['BTV ', num2str(screens(i))], 'LineWidth', 2)
+        scatter(rise_indices_up(i), up_data(i, rise_indices_up(i)),100, C{i},'filled', 'HandleVisibility', 'off')
+    end
+    title("Upstream")
+    xlabel("Time points (ns)")
+    ylabel("Photomultiplier signal (V)")
+    legend('FontSize', 14)
+    
+    % down data
+    ax2 = nexttile;
+    hold on
+    for i = 1:length(screens)
+        plot(down_data(i, :), 'color', C{i}, 'DisplayName', ['BTV ', num2str(screens(i))], 'LineWidth', 2)
+        scatter(rise_indices_down(i), down_data(i, rise_indices_down(i)),100, C{i},'filled', 'HandleVisibility', 'off')
+    end
+    title("Downstream")
+    xlabel("Time (ns)")
+    ylabel("Photomultiplier signal (V)")
+    legend('FontSize', 14)
+
+    axis(ax1, [50 150 -0.01 0.05])
     axis(ax2, [250 350 0 0.7])    
 
 %     savefig(f_waveforms, ['Corrector magnet data/BLM_', date, '_Corrector_Magnets_Signal_CFD.fig'])
-    exportgraphics(f_waveforms, ['BTV screen data/BLM_', date, '_BTV_Screens_Waveforms_CFD_Exclude_Screens.png'])
+    exportgraphics(f_waveforms, ['BTV screen data/BLM_', date, '_BTV_Screens_Waveforms_CFD_Third_Peak.png'])
 end
+
+
 
 
 function [gradient, offset] = Plot_reconstructed_positions_combined_readout(rise_indices_up_less, rise_indices_down_less, screens, screen_distances, date, refr_idx)
 
     reconstructed_positions = Find_fiber_loss_dist_combined_readout(refr_idx, rise_indices_up_less, rise_indices_down_less);
-    f_comb = figure(2);
+    f_comb = figure(3);
     f_comb.Position = [1800 500 800 800];
     hold on
 
@@ -166,13 +200,13 @@ function [gradient, offset] = Plot_reconstructed_positions_combined_readout(rise
     expected_screen_distances =  gradient * screen_distances_plot;
 
     plot(screen_distances_plot, expected_screen_distances, 'LineWidth', 2)
-    text(screen_distances(2) + 4, reconstructed_positions(2) - offset, [' Fit: y = ' num2str(gradient) 'x + ' num2str(offset)])
+    text(screen_distances_plot(1) + 15, expected_screen_distances(1) + 10, [' Fit: y = ' num2str(gradient) 'x + ' num2str(offset)])
 
     distances_rms = gradient * screen_distances + offset;
     rms = rmse(distances_rms, reconstructed_positions); % find root mean squared error between the predicted rise indices and the observed rise indices
-    text(screen_distances(2) + 4, reconstructed_positions(2) - 0.5 - offset, ['RMS value = ' num2str(rms)])
+    text(screen_distances_plot(1) + 15, expected_screen_distances(1) + 8, ['RMS value = ' num2str(rms)])
 
-    exportgraphics(f_comb, ['BTV screen data/BLM_', date, '_BTV_Screens_Reconstructed_Distance_CFD_Combined_Exclude_Screens.png'])
+    exportgraphics(f_comb, ['BTV screen data/BLM_', date, '_BTV_Screens_Reconstructed_Distance_CFD_Combined.png'])
 
 end
 
@@ -187,7 +221,7 @@ function [gradient, offset] = Plot_reconstructed_positions_upstream(rise_indices
 
     reconstructed_positions = Find_fiber_loss_dist_upstream(refr_idx, rise_indices_up_less);
 
-    f_up = figure(3);
+    f_up = figure(4);
     f_up.Position = [1800 500 800 800];
     hold on
 
@@ -210,13 +244,13 @@ function [gradient, offset] = Plot_reconstructed_positions_upstream(rise_indices
     expected_time_delays =  gradient * screen_distances_plot;
     
     plot(screen_distances_plot, expected_time_delays, 'LineWidth', 2)
-    text(screen_distances(2) + 4, reconstructed_positions(2) - offset, [' Fit: y = ' num2str(gradient) 'x + ' num2str(offset)])
+    text(screen_distances_plot(1) + 15, expected_time_delays(1) + 10, [' Fit: y = ' num2str(gradient) 'x + ' num2str(offset)])
 
     distances_rms = gradient * screen_distances + offset;
     rms = rmse(distances_rms, reconstructed_positions); % find root mean squared error between the predicted rise indices and the observed rise indices
-    text(screen_distances(2) + 4, reconstructed_positions(2) - offset -0.5, ['RMS value = ' num2str(rms)])
+    text(screen_distances_plot(1) + 15, expected_time_delays(1) + 8, ['RMS value = ' num2str(rms)])
 
-    exportgraphics(f_up, ['BTV screen data/BLM_', date, '_BTV_Screens_Reconstructed_Distance_CFD_Upstream_Exclude_Screens.png'])
+    exportgraphics(f_up, ['BTV screen data/BLM_', date, '_BTV_Screens_Reconstructed_Distance_CFD_Upstream.png'])
 
 
 end
@@ -226,7 +260,7 @@ function [gradient, offset] = Plot_reconstructed_positions_downstream(rise_indic
 
     reconstructed_positions = Find_fiber_loss_dist_downstream(refr_idx, rise_indices_down_less);
 
-    f_down = figure(4);
+    f_down = figure(5);
     f_down.Position = [1800 500 800 800];
     hold on
 
@@ -249,13 +283,13 @@ function [gradient, offset] = Plot_reconstructed_positions_downstream(rise_indic
     expected_time_delays =  gradient * screen_distances_plot;
     
     plot(screen_distances_plot, expected_time_delays, 'LineWidth', 2)
-    text(screen_distances(2) + 4, reconstructed_positions(2) - offset, [' Fit: y = ' num2str(gradient) 'x + ' num2str(offset)])
+    text(screen_distances_plot(1) + 15, expected_time_delays(1) + 10, [' Fit: y = ' num2str(gradient) 'x + ' num2str(offset)])
 
     distances_rms = gradient * screen_distances + offset;
     rms = rmse(distances_rms, reconstructed_positions); % find root mean squared error between the predicted rise indices and the observed rise indices
-    text(screen_distances(2) + 4, reconstructed_positions(2) - offset - 0.5, ['RMS value = ' num2str(rms)])
+    text(screen_distances_plot(1) + 15, expected_time_delays(1)+ 8, ['RMS value = ' num2str(rms)])
 
-    exportgraphics(f_down, ['BTV screen data/BLM_', date, '_BTV_Screens_Reconstructed_Distance_CFD_Downstream_Exclude_Screens.png'])
+    exportgraphics(f_down, ['BTV screen data/BLM_', date, '_BTV_Screens_Reconstructed_Distance_CFD_Downstream.png'])
 
 end
 

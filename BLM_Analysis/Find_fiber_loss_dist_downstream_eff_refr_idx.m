@@ -2,7 +2,7 @@
 function [beam_loss_dist_fiber] = Find_fiber_loss_dist_downstream_eff_refr_idx(loss_idx_down)
     % This function finds the beam loss position (in meters) from
     % the start of the beamline, using the downstream time index only (there
-    % will of course be a constant offset)
+    % will of course be a constant offset). It uses the non linear effective refractive index (hence solves a polynomial for the downstream distance)
 
     % loss_idx_down: time index of beam loss using Find_rise_time_idx
     % on the downstream (averaged) signal 

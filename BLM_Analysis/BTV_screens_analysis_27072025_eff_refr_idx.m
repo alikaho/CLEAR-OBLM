@@ -8,7 +8,9 @@
 close all
 date = num2str(27072025);
 refr_idx = 1.465; % silicon refractive index minimum (for maximum wavelength). Should be somewhere in between 1.45 and 1.485. Monty uses 1.465
-addpath '/nfs/cs-ccr-nfsop/nfs6/vol29/Linux/data/clear/MatLab/Operation/BLM_GUI_2/BLM_GUI_APP'
+
+parent_folder = fileparts(cd); % get the parent folder of this script
+addpath(fullfile(parent_folder, 'BLM_GUI_APP')); % add path with GUI app
 
 % copy_data_over("BTV screen data/27072025_BTV_screen_lookup.txt");
 [up_data, down_data, smooth_up_data, smooth_down_data, screens] = get_data(date);
