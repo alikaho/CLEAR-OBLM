@@ -2,6 +2,8 @@
 close all
 refr_idx = 1.25;
 
+parent_folder = fileparts(cd); % get the parent folder of this script
+addpath(fullfile(parent_folder, 'BLM_GUI_APP')); % add path with GUI app
 
 [up_data, down_data, smooth_up_data, smooth_down_data, magnets] = get_data('Corrector magnet data/27072025_corrector_magnet_lookup.txt');
 [rise_indices_up, rise_indices_down] = Find_rise_indices(up_data, down_data);

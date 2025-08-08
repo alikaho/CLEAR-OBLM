@@ -12,7 +12,8 @@ plot_signals(up_data, down_data, smooth_up_data, smooth_down_data, magnets, rise
 % plot_rise_time_differing_magnets(smooth_up_data)
 
 
-
+parent_folder = fileparts(cd); % get the parent folder of this script
+addpath(fullfile(parent_folder, 'BLM_GUI_APP')); % add path with GUI app
 
 
 

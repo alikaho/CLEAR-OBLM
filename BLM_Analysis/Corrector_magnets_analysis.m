@@ -1,5 +1,9 @@
 
 
+parent_folder = fileparts(cd); % get the parent folder of this script
+addpath(fullfile(parent_folder, 'BLM_GUI_APP')); % add path with GUI app
+
+
 [up_data, down_data, smooth_up_data, smooth_down_data, magnets, hor, vert] = get_data('16072025_corrector_magnet_lookup.txt');
 
 plot_signal_differing_current(up_data, down_data, smooth_up_data, smooth_down_data, magnets, vert);
