@@ -12,11 +12,9 @@ refr_idx = 1.465; % silicon refractive index for fiber distance of around 60m. S
 parent_folder = fileparts(cd); % get the parent folder of this script
 addpath(fullfile(parent_folder, 'BLM_GUI_APP')); % add path with GUI app
 
-% addpath '/nfs/cs-ccr-nfsop/nfs6/vol29/Linux/data/clear/MatLab/Operation/BLM_GUI_2/BLM_GUI_APP'
+% copy_data_over("BTV screen data/27072025_BTV_screen_lookup.txt"); % DON'T UNCOMMENT THIS LINE - this will recopy the data with different names
+[up_data, down_data, smooth_up_data, smooth_down_data, screens] = get_data(date); % get the data from the txt files in BTV screen data
 
-% copy_data_over("BTV screen data/27072025_BTV_screen_lookup.txt");
-[up_data, down_data, smooth_up_data, smooth_down_data, screens] = get_data(date);
-[rise_indices_up, rise_indices_down] = Find_rise_indices(up_data, down_data);
 
 % cut down to the usable screens
 screens_less_cell = {screens{1:3}, screens{6:9}};
@@ -26,13 +24,16 @@ errors_on_distances = [0.001, 0.3, 0.001, 0.001, 0.001, 0.4, 0.001, 0.001, 0.001
 up_data_less = up_data([1:3, 6:9], :);
 down_data_less = down_data([1:3, 6:9], :);
 
-rise_indices_up_less = rise_indices_up([1:3, 6:9]);
-rise_indices_down_less = rise_indices_down([1:3, 6:9]);
+[rise_indices_up, rise_indices_down] = Find_rise_indices(up_data_less, down_data_less);
+
+
+
 
 Plot_signals(up_data_less, down_data_less, screens_less, rise_indices_up_less, rise_indices_down_less, date);
-[gradient, offset] = Plot_reconstructed_positions_combined_readout(rise_indices_up_less, rise_indices_down_less, screens_less, screen_distances, date, refr_idx)
-[gradient, offset] = Plot_reconstructed_positions_upstream(rise_indices_up_less, screens_less, screen_distances, date, refr_idx)
-[gradient, offset] = Plot_reconstructed_positions_downstream(rise_indices_down_less, screens_less, screen_distances, date, refr_idx)
+
+[gradient_comb, offset_comb] = Plot_reconstructed_positions_combined_readout(rise_indices_up_less, rise_indices_down_less, screens_less, screen_distances, date, refr_idx);
+[gradient_up, offset_up] = Plot_reconstructed_positions_upstream(rise_indices_up_less, screens_less, screen_distances, date, refr_idx);
+[gradient_down, offset_down] = Plot_reconstructed_positions_downstream(rise_indices_down_less, screens_less, screen_distances, date, refr_idx);
 
 
 function copy_data_over(table)
@@ -135,7 +136,7 @@ function Plot_signals(up_data, down_data, screens, rise_indices_up, rise_indices
     legend('FontSize', 14)
 
     axis(ax1, [100 1000 -0.05 0.2])
-    axis(ax2, [250 350 0 0.7])    
+    axis(ax2, [100 1000 0 0.7])    
 
 %     savefig(f_waveforms, ['Corrector magnet data/BLM_', date, '_Corrector_Magnets_Signal_CFD.fig'])
     exportgraphics(f_waveforms, ['BTV screen data/BLM_', date, '_BTV_Screens_Waveforms_CFD.png'])
@@ -149,40 +150,22 @@ function [gradient, offset] = Plot_reconstructed_positions_combined_readout(rise
     f_comb.Position = [1800 500 800 800];
     hold on
 
-    % fit with straight line
-    fit = polyfit(screen_distances, reconstructed_positions, 1);
-    gradient = fit(1);
-    offset = fit(2);
+    % plot the fitted data and output gradient and offset
+    [gradient, offset] = Fit_and_disp_rms_error(screen_distances, reconstructed_positions);
 
+    % plot the experimental data (requires offset from fitting - hence afterwards)
     plot(screen_distances, reconstructed_positions - offset, '.', 'MarkerSize', 20)
     title("Reconstructed positions using combined readout method")
     subtitle("Constant Fraction Discriminator (CFD) method")
     xlabel("BTV screen distances (m)")
     ylabel("Reconstructed screen positions (m)")
     text(screen_distances, reconstructed_positions - offset, sprintfc('  %d', screens))
-    hold on
 
-
-    % plot straight line
-    screen_distances_plot = [screen_distances(1),screen_distances(end)];
-    expected_screen_distances =  gradient * screen_distances_plot;
-
-    plot(screen_distances_plot, expected_screen_distances, 'LineWidth', 2)
-    text(screen_distances_plot(1) + 15, expected_screen_distances(1) + 10, [' Fit: y = ' num2str(gradient) 'x + ' num2str(offset)])
-
-    distances_rms = gradient * screen_distances + offset;
-    rms = rmse(distances_rms, reconstructed_positions); % find root mean squared error between the predicted rise indices and the observed rise indices
-    text(screen_distances_plot(1) + 15, expected_screen_distances(1) + 8, ['RMS value = ' num2str(rms)])
-
+    % save the figure as png
     exportgraphics(f_comb, ['BTV screen data/BLM_', date, '_BTV_Screens_Reconstructed_Distance_CFD_Combined.png'])
 
 end
 
-% just plot the upstream time delay against the known distances
-% then see for a time delay given by the second peak where this would be
-% situated along the beamline. Does this then match the intensities of the
-% beam loss seen at screens nearest to this point??? Why is beam loss
-% secondary peak so low for 545? 
 
 
 function [gradient, offset] = Plot_reconstructed_positions_upstream(rise_indices_up_less, screens, screen_distances, date, refr_idx)
@@ -193,31 +176,18 @@ function [gradient, offset] = Plot_reconstructed_positions_upstream(rise_indices
     f_up.Position = [1800 500 800 800];
     hold on
 
-    % fit with straight line
-    fit = polyfit(screen_distances, reconstructed_positions, 1);
-    gradient = fit(1);
-    offset = fit(2);
+    % plot the fitted data and output gradient and offset
+    [gradient, offset] = Fit_and_disp_rms_error(screen_distances, reconstructed_positions);
 
+    % plot the experimental data (requires offset from fitting - hence afterwards)
     plot(screen_distances, reconstructed_positions - offset, '.', 'MarkerSize', 20)
     title("Reconstructed positions using upstream signal only")
     subtitle("Constant Fraction Discriminator (CFD) method")
     xlabel("BTV screen distances (m)")
-    ylabel("Reconstructed positions (m)")
+    ylabel("Reconstructed screen positions (m)")
     text(screen_distances, reconstructed_positions - offset, sprintfc('  %d', screens))
-    hold on
 
-
-    % plot straight line
-    screen_distances_plot = [screen_distances(1),screen_distances(end)];
-    expected_time_delays =  gradient * screen_distances_plot;
-    
-    plot(screen_distances_plot, expected_time_delays, 'LineWidth', 2)
-    text(screen_distances_plot(1) + 15, expected_time_delays(1) + 10, [' Fit: y = ' num2str(gradient) 'x + ' num2str(offset)])
-
-    distances_rms = gradient * screen_distances + offset;
-    rms = rmse(distances_rms, reconstructed_positions); % find root mean squared error between the predicted rise indices and the observed rise indices
-    text(screen_distances_plot(1) + 15, expected_time_delays(1) + 8, ['RMS value = ' num2str(rms)])
-
+    % save the figure as png
     exportgraphics(f_up, ['BTV screen data/BLM_', date, '_BTV_Screens_Reconstructed_Distance_CFD_Upstream.png'])
 
 
@@ -232,31 +202,18 @@ function [gradient, offset] = Plot_reconstructed_positions_downstream(rise_indic
     f_down.Position = [1800 500 800 800];
     hold on
 
-    % fit with straight line
-    fit = polyfit(screen_distances, reconstructed_positions, 1);
-    gradient = fit(1); 
-    offset = fit(2);
+    % plot the fitted data and output gradient and offset
+    [gradient, offset] = Fit_and_disp_rms_error(screen_distances, reconstructed_positions);
 
+    % plot the experimental data (requires offset from fitting - hence afterwards)
     plot(screen_distances, reconstructed_positions - offset, '.', 'MarkerSize', 20)
-    title("Reconstructed positions using downstream signal only")
+    title("Reconstructed positions using upstream signal only")
     subtitle("Constant Fraction Discriminator (CFD) method")
     xlabel("BTV screen distances (m)")
-    ylabel("Reconstructed position (m)")
+    ylabel("Reconstructed screen positions (m)")
     text(screen_distances, reconstructed_positions - offset, sprintfc('  %d', screens))
-    hold on
 
-
-    % plot straight line
-    screen_distances_plot = [screen_distances(1),screen_distances(end)];
-    expected_time_delays =  gradient * screen_distances_plot;
-    
-    plot(screen_distances_plot, expected_time_delays, 'LineWidth', 2)
-    text(screen_distances_plot(1) + 15, expected_time_delays(1) + 10, [' Fit: y = ' num2str(gradient) 'x + ' num2str(offset)])
-
-    distances_rms = gradient * screen_distances + offset;
-    rms = rmse(distances_rms, reconstructed_positions); % find root mean squared error between the predicted rise indices and the observed rise indices
-    text(screen_distances_plot(1) + 15, expected_time_delays(1)+ 8, ['RMS value = ' num2str(rms)])
-
+    % save the figure as png
     exportgraphics(f_down, ['BTV screen data/BLM_', date, '_BTV_Screens_Reconstructed_Distance_CFD_Downstream.png'])
 
 end
