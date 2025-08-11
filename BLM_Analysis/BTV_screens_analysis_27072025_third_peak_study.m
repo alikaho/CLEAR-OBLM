@@ -31,8 +31,23 @@ up_data_peak = up_data_less(:, 850:1000); % 850 to give enough for a background 
 % third peak rise indices
 [rise_indices_up_peak, rise_indices_down_peak] = Find_rise_indices(up_data_peak, down_data_less);
 
+% Plot the signals and zoom in on the third peak and the downstream signals
 Plot_signals(up_data_less, down_data_less, screens_less, rise_indices_up_less, rise_indices_down_less, date);
 Plot_third_peaks(up_data_peak, down_data_less, screens_less, rise_indices_up_peak, rise_indices_down_peak, date);
+
+% Calculate the time difference between the upstream and downstream rise indices
+time_differences = rise_indices_up_peak - rise_indices_down_peak; % time difference between the upstream and downstream rise indices
+extra_distance_upstream_travelled = time_differences * 1e-9 * 3e8 / refr_idx;
+extra_distance_upstream_travelled_exclude_235 = extra_distance_upstream_travelled([1, 3:7]); % exclude the 235 screen as it does not have a clear third peak.
+extra_distance = mean(extra_distance_upstream_travelled_exclude_235);
+fprintf("Average extra distance travelled upstream by the third peak: %.3f m\n", extra_distance);
+
+% Check third peak distances by using upstream and downstream each separately
+
+
+
+
+
 
 [gradient, offset] = Plot_reconstructed_positions_combined_readout(rise_indices_up_less, rise_indices_down_less, screens_less, screen_distances, date, refr_idx)
 [gradient, offset] = Plot_reconstructed_positions_upstream(rise_indices_up_less, screens_less, screen_distances, date, refr_idx)
@@ -138,14 +153,14 @@ function Plot_third_peaks(up_data, down_data, screens, rise_indices_up, rise_ind
     subtitle(t, 'Third (reflection) peak')
     C = {'red', 'green', 'blue', 'cyan','black', 'magenta', [1 0.647 0], [128 0 128]/255 }; % cell array of colours
     
-    time_pts = 1:size(up_data, 2) + 850; 
+    time_pts = linspace(850,size(up_data, 2) + 850, size(up_data, 2));
 
     % up data
     ax1 = nexttile;
     hold on
     for i = 1:length(screens)
         plot(time_pts, up_data(i, :), 'Color', C{i}, 'DisplayName', ['BTV ', num2str(screens(i))], 'LineWidth', 2)
-        scatter(rise_indices_up(i), up_data(i, rise_indices_up(i)),100, C{i},'filled', 'HandleVisibility', 'off')
+        scatter(rise_indices_up(i) + 850, up_data(i, rise_indices_up(i)),100, C{i},'filled', 'HandleVisibility', 'off')
     end
     title("Upstream")
     xlabel("Time points (ns)")
@@ -164,12 +179,14 @@ function Plot_third_peaks(up_data, down_data, screens, rise_indices_up, rise_ind
     ylabel("Photomultiplier signal (V)")
     legend('FontSize', 14)
 
-    axis(ax1, [50 150 -0.01 0.05])
+    axis(ax1, [900 1000 -0.01 0.05])
     axis(ax2, [250 350 0 0.7])    
 
 %     savefig(f_waveforms, ['Corrector magnet data/BLM_', date, '_Corrector_Magnets_Signal_CFD.fig'])
     exportgraphics(f_waveforms, ['BTV screen data/BLM_', date, '_BTV_Screens_Waveforms_CFD_Third_Peak.png'])
 end
+
+
 
 
 
