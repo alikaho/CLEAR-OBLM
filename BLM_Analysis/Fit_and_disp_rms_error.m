@@ -31,8 +31,8 @@ function [gradient, offset] = Fit_and_disp_rms_error(screen_distances, reconstru
     offset_rounded = round(offset, -floor(log10(offset_error))); % round the gradient to the significant figures of the gradient error
 
     % display the leading digit of the gradient and offset errors
-    offset_error_disp = leadingDigit(offset_error); % leading digit of the offset error
-    gradient_error_disp = leadingDigit(gradient_error); % leading digit of the gradient error
+    offset_error_disp = Get_leading_digit(offset_error); % leading digit of the offset error
+    gradient_error_disp = Get_leading_digit(gradient_error); % leading digit of the gradient error
 
     % display the fit and rms values on the plot
     text(screen_distances_plot(1) + 15, expected_screen_distances(1) + 10, ['Fit: y = ' num2str(gradient_rounded) '(' num2str(gradient_error_disp) ')' 'x + ' num2str(offset_rounded) '(' num2str(offset_error_disp) ')'])

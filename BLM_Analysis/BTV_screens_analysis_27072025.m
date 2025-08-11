@@ -24,8 +24,7 @@ errors_on_distances = [0.001, 0.3, 0.001, 0.001, 0.001, 0.4, 0.001, 0.001, 0.001
 up_data_less = up_data([1:3, 6:9], :);
 down_data_less = down_data([1:3, 6:9], :);
 
-[rise_indices_up, rise_indices_down] = Find_rise_indices(up_data_less, down_data_less);
-
+[rise_indices_up_less, rise_indices_down_less] = Find_rise_indices(up_data_less, down_data_less);
 
 Plot_signals(up_data_less, down_data_less, screens_less, rise_indices_up_less, rise_indices_down_less, date);
 
@@ -153,7 +152,7 @@ function [gradient, offset] = Plot_reconstructed_positions_upstream(rise_indices
     hold on
 
     % plot the fitted data and output gradient and offset
-    [gradient, offset] = Fit_and_disp_rms_error(screen_distances, reconstructed_positions);
+    [gradient, offset] = Fit_and_disp_rms_error(screen_distances, reconstructed_positions)
 
     % plot the experimental data (requires offset from fitting - hence afterwards)
     plot(screen_distances, reconstructed_positions - offset, '.', 'MarkerSize', 20)
@@ -179,7 +178,7 @@ function [gradient, offset] = Plot_reconstructed_positions_downstream(rise_indic
     hold on
 
     % plot the fitted data and output gradient and offset
-    [gradient, offset] = Fit_and_disp_rms_error(screen_distances, reconstructed_positions)
+    [gradient, offset] = Fit_and_disp_rms_error(screen_distances, reconstructed_positions);
  
     % plot the experimental data (requires offset from fitting - hence afterwards)
     plot(screen_distances, reconstructed_positions - offset, '.', 'MarkerSize', 20)
