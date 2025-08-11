@@ -2,8 +2,6 @@
 % Script analyses the BLM signals from all screens, looking for the reflection signal position in particular.
 % To analyse the reflection signal, we use the downstream rise time conversion function.
 
-
-
 close all
 date = num2str(27072025);
 refr_idx = 1.465; % silicon refractive index for fiber distance of around 60m. See effective refractive index to see full accounting of fiber distance/attenuation/wavelength etc. 
@@ -11,6 +9,7 @@ refr_idx = 1.465; % silicon refractive index for fiber distance of around 60m. S
 parent_folder = fileparts(cd); % get the parent folder of this script
 addpath(fullfile(parent_folder, 'BLM_GUI_APP')); % add path with GUI app
 
+% get the data from the txt files in BTV screen data
 [up_data, down_data, smooth_up_data, smooth_down_data, screens] = get_data(date);
 
 % cut down to the usable screens
@@ -25,34 +24,20 @@ down_data_less = down_data([1:3, 6:9], :);
 % now cut down to the part of the data that includes the third (reflection) peak
 up_data_peak = up_data_less(:, 850:1000); % 850 to give enough for a background reading in Find_rise_time_CFD.m
 
-% first peak rise indices
-[rise_indices_up_less, rise_indices_down_less] = Find_rise_indices(up_data_less, down_data_less);
-
 % third peak rise indices
 [rise_indices_up_peak, rise_indices_down_peak] = Find_rise_indices(up_data_peak, down_data_less);
+rise_indices_up_peak = rise_indices_up_peak + 850; % add the offset of 850 to the rise indices to account for the cut down data
 
-% Plot the signals and zoom in on the third peak and the downstream signals
-Plot_signals(up_data_less, down_data_less, screens_less, rise_indices_up_less, rise_indices_down_less, date);
-Plot_third_peaks(up_data_peak, down_data_less, screens_less, rise_indices_up_peak, rise_indices_down_peak, date);
+
+% Plot the signals zoomed in on the third peak and the downstream signal first peak
+Plot_third_peak(up_data_peak, down_data_less, screens_less, rise_indices_up_peak, rise_indices_down_peak, date);
 
 % Calculate the time difference between the upstream and downstream rise indices
 time_differences = rise_indices_up_peak - rise_indices_down_peak; % time difference between the upstream and downstream rise indices
 extra_distance_upstream_travelled = time_differences * 1e-9 * 3e8 / refr_idx;
 extra_distance_upstream_travelled_exclude_235 = extra_distance_upstream_travelled([1, 3:7]); % exclude the 235 screen as it does not have a clear third peak.
 extra_distance = mean(extra_distance_upstream_travelled_exclude_235);
-fprintf("Average extra distance travelled upstream by the third peak: %.3f m\n", extra_distance);
-
-% Check third peak distances by using upstream and downstream each separately
-
-
-
-
-
-
-[gradient, offset] = Plot_reconstructed_positions_combined_readout(rise_indices_up_less, rise_indices_down_less, screens_less, screen_distances, date, refr_idx)
-[gradient, offset] = Plot_reconstructed_positions_upstream(rise_indices_up_less, screens_less, screen_distances, date, refr_idx)
-[gradient, offset] = Plot_reconstructed_positions_downstream(rise_indices_down_less, screens_less, screen_distances, date, refr_idx)
-
+fprintf("Average extra distance travelled by upstream third peak: %.3f m\n", extra_distance);
 
 
 
@@ -97,53 +82,7 @@ end
 
 
 
-
-function Plot_signals(up_data, down_data, screens, rise_indices_up, rise_indices_down, date)
-    % Plot the data
-    f_waveforms = figure(1);
-    f_waveforms.Position = [900 500 1400 800];
-    t = tiledlayout(1,2, 'TileSpacing','Compact');
-
-    title(t, 'Beam Loss For BTV Screens Along CLEAR Beamline', fontsize = 18)
-    subtitle(t, 'Rise time found using Constant Fraction Discriminator (CFD)')
-    C = {'red', 'green', 'blue', 'cyan','black', 'magenta', [1 0.647 0], [128 0 128]/255 }; % cell array of colours
-    
-    
-    % up data
-    ax1 = nexttile;
-    hold on
-    for i = 1:length(screens)
-        plot(up_data(i, :), 'Color', C{i}, 'DisplayName', ['BTV ', num2str(screens(i))], 'LineWidth', 2)
-        scatter(rise_indices_up(i), up_data(i, rise_indices_up(i)),100, C{i},'filled', 'HandleVisibility', 'off')
-    end
-    title("Upstream")
-    xlabel("Time points (ns)")
-    ylabel("Photomultiplier signal (V)")
-    legend('FontSize', 14)
-    
-    % down data
-    ax2 = nexttile;
-    hold on
-    for i = 1:length(screens)
-        plot(down_data(i, :), 'color', C{i}, 'DisplayName', ['BTV ', num2str(screens(i))], 'LineWidth', 2)
-        scatter(rise_indices_down(i), down_data(i, rise_indices_down(i)),100, C{i},'filled', 'HandleVisibility', 'off')
-    end
-    title("Downstream")
-    xlabel("Time (ns)")
-    ylabel("Photomultiplier signal (V)")
-    legend('FontSize', 14)
-
-    axis(ax1, [100 1000 -0.05 0.2])
-    axis(ax2, [100 1000 0 0.7])    
-
-%     savefig(f_waveforms, ['Corrector magnet data/BLM_', date, '_Corrector_Magnets_Signal_CFD.fig'])
-    exportgraphics(f_waveforms, ['BTV screen data/BLM_', date, '_BTV_Screens_Waveforms_CFD.png'])
-end
-
-
-
-
-function Plot_third_peaks(up_data, down_data, screens, rise_indices_up, rise_indices_down, date)
+function Plot_third_peak(up_data, down_data, screens, rise_indices_up, rise_indices_down, date)
     % Plot the data
     f_waveforms = figure(2);
     f_waveforms.Position = [900 500 1400 800];
@@ -160,7 +99,7 @@ function Plot_third_peaks(up_data, down_data, screens, rise_indices_up, rise_ind
     hold on
     for i = 1:length(screens)
         plot(time_pts, up_data(i, :), 'Color', C{i}, 'DisplayName', ['BTV ', num2str(screens(i))], 'LineWidth', 2)
-        scatter(rise_indices_up(i) + 850, up_data(i, rise_indices_up(i)),100, C{i},'filled', 'HandleVisibility', 'off')
+        scatter(rise_indices_up(i), up_data(i, rise_indices_up(i) - 850),100, C{i},'filled', 'HandleVisibility', 'off')
     end
     title("Upstream")
     xlabel("Time points (ns)")
@@ -185,129 +124,4 @@ function Plot_third_peaks(up_data, down_data, screens, rise_indices_up, rise_ind
 %     savefig(f_waveforms, ['Corrector magnet data/BLM_', date, '_Corrector_Magnets_Signal_CFD.fig'])
     exportgraphics(f_waveforms, ['BTV screen data/BLM_', date, '_BTV_Screens_Waveforms_CFD_Third_Peak.png'])
 end
-
-
-
-
-
-
-function [gradient, offset] = Plot_reconstructed_positions_combined_readout(rise_indices_up_less, rise_indices_down_less, screens, screen_distances, date, refr_idx)
-
-    reconstructed_positions = Find_fiber_loss_dist_combined_readout(refr_idx, rise_indices_up_less, rise_indices_down_less);
-    f_comb = figure(3);
-    f_comb.Position = [1800 500 800 800];
-    hold on
-
-    % fit with straight line
-    fit = polyfit(screen_distances, reconstructed_positions, 1);
-    gradient = fit(1);
-    offset = fit(2);
-
-    plot(screen_distances, reconstructed_positions - offset, '.', 'MarkerSize', 20)
-    title("Reconstructed positions using combined readout method")
-    subtitle("Constant Fraction Discriminator (CFD) method")
-    xlabel("BTV screen distances (m)")
-    ylabel("Reconstructed screen positions (m)")
-    text(screen_distances, reconstructed_positions - offset, sprintfc('  %d', screens))
-    hold on
-
-
-    % plot straight line
-    screen_distances_plot = [screen_distances(1),screen_distances(end)];
-    expected_screen_distances =  gradient * screen_distances_plot;
-
-    plot(screen_distances_plot, expected_screen_distances, 'LineWidth', 2)
-    text(screen_distances_plot(1) + 15, expected_screen_distances(1) + 10, [' Fit: y = ' num2str(gradient) 'x + ' num2str(offset)])
-
-    distances_rms = gradient * screen_distances + offset;
-    rms = rmse(distances_rms, reconstructed_positions); % find root mean squared error between the predicted rise indices and the observed rise indices
-    text(screen_distances_plot(1) + 15, expected_screen_distances(1) + 8, ['RMS value = ' num2str(rms)])
-
-    exportgraphics(f_comb, ['BTV screen data/BLM_', date, '_BTV_Screens_Reconstructed_Distance_CFD_Combined.png'])
-
-end
-
-% just plot the upstream time delay against the known distances
-% then see for a time delay given by the second peak where this would be
-% situated along the beamline. Does this then match the intensities of the
-% beam loss seen at screens nearest to this point??? Why is beam loss
-% secondary peak so low for 545? 
-
-
-function [gradient, offset] = Plot_reconstructed_positions_upstream(rise_indices_up_less, screens, screen_distances, date, refr_idx)
-
-    reconstructed_positions = Find_fiber_loss_dist_upstream(refr_idx, rise_indices_up_less);
-
-    f_up = figure(4);
-    f_up.Position = [1800 500 800 800];
-    hold on
-
-    % fit with straight line
-    fit = polyfit(screen_distances, reconstructed_positions, 1);
-    gradient = fit(1);
-    offset = fit(2);
-
-    plot(screen_distances, reconstructed_positions - offset, '.', 'MarkerSize', 20)
-    title("Reconstructed positions using upstream signal only")
-    subtitle("Constant Fraction Discriminator (CFD) method")
-    xlabel("BTV screen distances (m)")
-    ylabel("Reconstructed positions (m)")
-    text(screen_distances, reconstructed_positions - offset, sprintfc('  %d', screens))
-    hold on
-
-
-    % plot straight line
-    screen_distances_plot = [screen_distances(1),screen_distances(end)];
-    expected_time_delays =  gradient * screen_distances_plot;
-    
-    plot(screen_distances_plot, expected_time_delays, 'LineWidth', 2)
-    text(screen_distances_plot(1) + 15, expected_time_delays(1) + 10, [' Fit: y = ' num2str(gradient) 'x + ' num2str(offset)])
-
-    distances_rms = gradient * screen_distances + offset;
-    rms = rmse(distances_rms, reconstructed_positions); % find root mean squared error between the predicted rise indices and the observed rise indices
-    text(screen_distances_plot(1) + 15, expected_time_delays(1) + 8, ['RMS value = ' num2str(rms)])
-
-    exportgraphics(f_up, ['BTV screen data/BLM_', date, '_BTV_Screens_Reconstructed_Distance_CFD_Upstream.png'])
-
-
-end
-
-
-function [gradient, offset] = Plot_reconstructed_positions_downstream(rise_indices_down_less, screens, screen_distances, date, refr_idx)
-
-    reconstructed_positions = Find_fiber_loss_dist_downstream(refr_idx, rise_indices_down_less);
-
-    f_down = figure(5);
-    f_down.Position = [1800 500 800 800];
-    hold on
-
-    % fit with straight line
-    fit = polyfit(screen_distances, reconstructed_positions, 1);
-    gradient = fit(1); 
-    offset = fit(2);
-
-    plot(screen_distances, reconstructed_positions - offset, '.', 'MarkerSize', 20)
-    title("Reconstructed positions using downstream signal only")
-    subtitle("Constant Fraction Discriminator (CFD) method")
-    xlabel("BTV screen distances (m)")
-    ylabel("Reconstructed position (m)")
-    text(screen_distances, reconstructed_positions - offset, sprintfc('  %d', screens))
-    hold on
-
-
-    % plot straight line
-    screen_distances_plot = [screen_distances(1),screen_distances(end)];
-    expected_time_delays =  gradient * screen_distances_plot;
-    
-    plot(screen_distances_plot, expected_time_delays, 'LineWidth', 2)
-    text(screen_distances_plot(1) + 15, expected_time_delays(1) + 10, [' Fit: y = ' num2str(gradient) 'x + ' num2str(offset)])
-
-    distances_rms = gradient * screen_distances + offset;
-    rms = rmse(distances_rms, reconstructed_positions); % find root mean squared error between the predicted rise indices and the observed rise indices
-    text(screen_distances_plot(1) + 15, expected_time_delays(1)+ 8, ['RMS value = ' num2str(rms)])
-
-    exportgraphics(f_down, ['BTV screen data/BLM_', date, '_BTV_Screens_Reconstructed_Distance_CFD_Downstream.png'])
-
-end
-
 

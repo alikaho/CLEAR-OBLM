@@ -27,15 +27,15 @@ function [gradient, offset] = Fit_and_disp_rms_error(screen_distances, reconstru
     offset_error = round(abs(percent_error * offset / 100),1, 'significant'); % calculate the offset error
     
     % reduce the gradient and offset to the significant figures of the gradient and offset errors
-    gradient = round(gradient, -floor(log10(gradient_error))); % round the gradient to the significant figures of the gradient error     
-    offset = round(offset, -floor(log10(offset_error))); % round the gradient to the significant figures of the gradient error
+    gradient_rounded = round(gradient, -floor(log10(gradient_error))); % round the gradient to the significant figures of the gradient error     
+    offset_rounded = round(offset, -floor(log10(offset_error))); % round the gradient to the significant figures of the gradient error
 
     % display the leading digit of the gradient and offset errors
     offset_error_disp = leadingDigit(offset_error); % leading digit of the offset error
     gradient_error_disp = leadingDigit(gradient_error); % leading digit of the gradient error
 
     % display the fit and rms values on the plot
-    text(screen_distances_plot(1) + 15, expected_screen_distances(1) + 10, [' Fit: y = ' num2str(gradient) '(' num2str(gradient_error_disp) ')' 'x + ' num2str(offset) '(' num2str(offset_error_disp) ')'])
+    text(screen_distances_plot(1) + 15, expected_screen_distances(1) + 10, ['Fit: y = ' num2str(gradient_rounded) '(' num2str(gradient_error_disp) ')' 'x + ' num2str(offset_rounded) '(' num2str(offset_error_disp) ')'])
     text(screen_distances_plot(1) + 15, expected_screen_distances(1) + 8, ['RMS value = ' num2str(rms)])
 
 end
