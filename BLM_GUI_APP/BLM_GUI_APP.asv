@@ -69,9 +69,8 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
         plot_beam_loss_colour = [0 1 1 0.5]
 
         % Calibration properties (used in Convert_fiber_to_beam_dist)
-        gradient = 0.848 
-        offset = -7.175
-
+        gradient
+        offset
 
 
     end
@@ -86,7 +85,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             % signals. Calls Find_rise_time_CFD.m to find the points of rise
             % in both waveforms using the constant fraction descriminator
             % approach. Calculates the distance of loss down the beam by
-            % calling Find_fiber_loss_dist.m then
+            % calling Find_fiber_loss_dist_combined_readout.m then
             % Convert_fiber_to_beam_dist.m. Plots the indication of this
             % disteance on the CLEAR Beamline maps. 
 
@@ -104,7 +103,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             [Gun_charge, ~, THz_charge, THz2_charge] = Read_BCM; % Read_BCM gets the charge at the gun, THz and THz2. 
 
             total_beam_length = 36.38;
-            refr_idx = 1.465;
+            % refr_idx = 1.465;
             
             app.total_time = matlabJapc.staticGetSignal('SCT.USER.SETUP','CA.SCOPE10/TimeBase#value') * 1e9 ; % gets the total time in ns from the left of the OASIS viewer to the right side (e.g. set by 100ns/div x 10 = 1000ns = 1us)
 
@@ -127,7 +126,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
 
                 [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_smoothed_signal(app); % acquire upstream and downstream signal and averaged signal
                 % [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_saved_signal("22072025-16:38:18") ; % acquires dry run saved data for given screen number
-                % [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_screen_saved_signal(22072025, 390); 
+                % [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_screen_saved_signal(27072025, 215); 
 
 
                 loss_idx_up = Find_rise_time_CFD(smooth_up_data);
@@ -232,6 +231,10 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.OnOffRockerSwitch.Value = 'Stop';       
             app.idx_meas = 1;
 
+            parent_folder = fileparts(cd); % get the parent folder of this script
+            addpath(fullfile(parent_folder, 'BLM_Analysis')); % add path with Analysis functions
+            addpath(fullfile(parent_folder, 'BLM_GUI_APP')); % add path with GUI app
+
             % addpath /nfs/cs-ccr-nfs6/vol29/Linux/data/clear/MatLab/Operation/Gun_Energy
             % addpath /nfs/cs-ccr-nfs6/vol29/Linux/data/clear/MatLab/Operation/Gun_Energy
 
@@ -245,9 +248,20 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
 
             matlabJapc.staticSetSignal('SCT.USER.SETUP','CA.SCOPE10.CH01/Sensibility#value', 0.05) % sets to 5mV/div view
             matlabJapc.staticSetSignal('SCT.USER.SETUP','CA.SCOPE10.CH02/Sensibility#value', 0.05) % sets to 5mV/div view
+            
+            % Start monitoring the triggering of the scope. This will
+            % callbak to the plotting function and will be started and
+            % stopped by the rocker switch.
+
             % app.monitorMTV = matlabJapcMonitor('SCT.USER.SETUP',{['CA.SCOPE10.CH02','/Acquisition']}, @(data)Plot_signal_beam_loss(app)); % create monitorMTV object with callback to the plotting function (doesn't start plotting yet)
             app.monitorMTV = matlabJapcMonitor('SCT.USER.SETUP',{['CX.SMEAS-BPMP','/Acquisition']}, @(data)Plot_signal_beam_loss(app)); % create monitorMTV object with callback to the plotting function (doesn't start plotting yet)
             
+            % Set the gradient and offset (used in the
+            % Convert_fiber_to_beam_dist.m function) to the last saved
+            % parameters from Saved_calibration_params.mat
+            app.gradient 
+
+
 
         end
 
@@ -373,7 +387,6 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             screen_distances = zeros(length(screen_names), 1);
             screen_distances([1,3:7]) = Get_screen_distances(screen_names([1,3:7])); % Screen 540 has distance recorded, but 235 doesn't so what is here is an estimate
             screen_distances(2) = 7.07; % approximate (+- 0.3m) distance to screen 235
-
             % screen_distances = [20.6 26.04 29.75 32.55]; % would like to call these directly from the lookup table
             rise_indices_up = zeros(1, length(screen_names));
             rise_indices_down = zeros(1, length(screen_names));
@@ -394,16 +407,15 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             % (540 gives the largest signal from previous measurements)
 
             app.SaveTextArea.Value = {''; 'Placing in screen 540 for autosetting oscilloscope'; '';};
-            matlabJapc.staticSetSignal('', ['CAS.BTV0420','/Setting#screenSelect'],int32(1)); % Puts in screen
-            pause(3)          
+            matlabJapc.staticSetSignal('', ['CAS.BTV0420','/Setting#screenSelect'],int32(1)); % Puts in 540 screen
+            pause(2)          
             app.SaveTextArea.Value = {''; 'Autosetting upstream oscilloscope ';};                
             Autoset_oscilloscope('CA.SCOPE10.CH01') % Autoset the downstream scope signal
-            pause(2)
             app.SaveTextArea.Value = {''; 'Autosetting downstream oscilloscope ';};                
             Autoset_oscilloscope('CA.SCOPE10.CH02') % Autoset the upstream scope signal
-            pause(3)
+            pause(2)
+            matlabJapc.staticSetSignal('', ['CAS.BTV0420','/Setting#screenSelect'],int32(0)); % Takes out 540 screen
 
-            
             for i = 1:length(screen_names)
                 app.SaveTextArea.Value = {''; ['Placing in screen ' num2str(screen_names(i))]; '';};
                 matlabJapc.staticSetSignal('', [BTV{i},'/Setting#screenSelect'],BTV_in(i)); % Puts in screen
@@ -411,7 +423,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
 
                 app.SaveTextArea.Value = {''; ['Acquiring calibration data for screen ' num2str(screen_names(i))]; '';};                
                 figs_signal = figure(i);
-                figs_signal.Position = [1000 + i*610 1500 600 600];
+                figs_signal.Position = [i*310 100 300 300];
                 [avg_up_data(i, :), avg_down_data(i, :), up_data_all(i, :, :), down_data_all(i, :, :)] = Acquire_averaged_data(app);
                 
                 % Find the rise time and plot on the figure
@@ -422,11 +434,10 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
                 
                 app.SaveTextArea.Value = {''; ['Taking out screen ' num2str(screen_names(i))]; '';};
                 matlabJapc.staticSetSignal('', [BTV{i},'/Setting#screenSelect'],int32(0)); % Sets screen out to ZERO
-                pause(5)
+                pause(3)
 
                 % check if screen is out before continuing - will have to
                 % see because can't use continue here I don't think
-                % figs_signal.set_rasterized(True);
                 savefig(figs_signal, ['Calibration saved data/BLM_GUI_screen_', num2str(screen_names(i)), '_calibration_data_', char(datetime('now', 'Format', 'ddMMyyyy-HH:mm:ss')), '.fig'])     
 
 
@@ -438,10 +449,10 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.SaveTextArea.Value = {''; 'Reconstructing positions ... ' ; '';};
 
 
-            reconstructed_positions = Find_fiber_loss_dist(rise_indices_up, rise_indices_down);
+            reconstructed_positions = Find_fiber_loss_dist_combined_readout_eff_refr_idx(rise_indices_up, rise_indices_down);
 
             fig_fitting = figure(5);
-            fig_fitting.Position = [1800 500 800 800];
+            fig_fitting.Position = [1800 500 500 500];
         
             plot(screen_distances, reconstructed_positions, '.', 'MarkerSize', 20)
             title("Reconstructed positions against known BTV screen distances")
@@ -482,14 +493,17 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.SaveTextArea.Value = {'' ; 'Calibration data saved.' ; ''};
             pause(1)
 
+            m = 1.1587;
+            c = -15.4938;
+
             % Check whether user would like to use the new calibration
             % parameters or not
             use_calibration_params = Confirm_use_new_calibration_params(app);
             if use_calibration_params
-                save('Saved_calibration_params.txt', m, c)
+                save('Calibration saved data/Saved_calibration_params.mat', 'm', 'c')
                 disp('New calibration paramaters saved')
             else
-                disp('Kept old calibration parameters')
+                disp('Keeping old calibration parameters')
             end
 
             app.SaveTextArea.Visible = 'off';
