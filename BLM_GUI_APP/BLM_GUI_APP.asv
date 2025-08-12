@@ -59,7 +59,6 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
 
         % App closing and plotting on and off
         stop_request = false % stop_request becomes true when OnOffRockerSwitch switches to "Stop" 
-        is_plotting = false
 
         % Images 
         image1 % CLEAR Beamline part 1
@@ -162,13 +161,13 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
                 % plot the beam loss points (only if they are
                 % within a physical index range)
                 if loss_idx_up > 0 && loss_idx_up <= 1000
-                    scatter(app.UIAxes2,loss_idx_up,up_data(loss_idx_up), 'cyan,'filled')
+                    scatter(app.UIAxes2,loss_idx_up,up_data(loss_idx_up), app.plot_rise_index_colour,'filled')
                     scatter(app.UIAxes4,loss_idx_up,smooth_up_data(loss_idx_up), app.plot_rise_index_colour,'filled')
                 end
 
                 if loss_idx_down > 0 && loss_idx_down <= 1000
-                    scatter(app.UIAxes1,loss_idx_down,down_data(loss_idx_down),app.plot_beam_loss_colour,'filled')
-                    scatter(app.UIAxes3,loss_idx_down,smooth_down_data(loss_idx_down),app.plot_beam_loss_colour,'filled')
+                    scatter(app.UIAxes1,loss_idx_down,down_data(loss_idx_down),app.plot_rise_index_colour,'filled')
+                    scatter(app.UIAxes3,loss_idx_down,smooth_down_data(loss_idx_down),app.plot_rise_index_colour,'filled')
                 end
 
                 hold(app.UIAxes1, 'off')
@@ -272,7 +271,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
 
                     matlabJapc.staticSetSignal('','CX.SMEAS-BPMP/OutEnable#outEnabled', 1)
                     app.monitorMTV.start();
-                    matlabJapcMonitor('SCT.USER.SETUP',{['CA.SCOPE10.CH02','/Acquisition']}, @(data)Plot_signal_beam_loss(app)).start(); % create monitorMTV object with callback to the plotting function (doesn't start plotting yet)
+                    % matlabJapcMonitor('SCT.USER.SETUP',{['CA.SCOPE10.CH02','/Acquisition']}, @(data)Plot_signal_beam_loss(app)).start(); % create monitorMTV object with callback to the plotting function (doesn't start plotting yet)
             
 
                 elseif strcmpi(value, 'Stop')                    
@@ -368,10 +367,14 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             disp('Beginning Calibration')
 
 
-            screen_names = [390, 620, 730, 810];
-            BTV = {'CA.BTV0390','CA.BTV0620', 'CA.BTV0730','CA.BTV0810'};
-            BTV_in = [int32(2), int32(1), int32(1), int32(1)]; %int32(2) looks like "SECOND", int32(1) looks like "FIRST"
-            screen_distances = [20.6 26.04 29.75 32.55]; % would like to call these directly from the lookup table
+            screen_names = [215, 235, 390, 540, 620, 730, 810]; % nb that 540 is controlled with CAS.BTV0420, and screen 235 is actually controlled by CA.BTV0125
+            BTV = {'CA.BTV0215', 'CA.BTV0125', 'CA.BTV0390','CAS.BTV0420', 'CA.BTV0620', 'CA.BTV0730','CA.BTV0810'};
+            BTV_in = [int32(1), int32(1), int32(2), int32(1), int32(1), int32(1), int32(1)]; %int32(2) looks like "SECOND", int32(1) looks like "FIRST"
+            screen_distances = zeros(length(screen_names), 1);
+            screen_distances([1,3:7]) = Get_screen_distances(screen_names([1,3:7])); % Screen 540 has distance recorded, but 235 doesn't so what is here is an estimate
+            screen_distances(2) = 7.07; % approximate (+- 0.3m) distance to screen 235
+
+            % screen_distances = [20.6 26.04 29.75 32.55]; % would like to call these directly from the lookup table
             rise_indices_up = zeros(1, length(screen_names));
             rise_indices_down = zeros(1, length(screen_names));
             avg_up_data = zeros(length(screen_names), 1000);
@@ -381,21 +384,29 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             
 
             % Take out all screens beforehand 
-            for i = 1:4
+            for i = 1:length(screen_names)
                 matlabJapc.staticSetSignal('', [BTV{i},'/Setting#screenSelect'],int32(0)); % Sets screen out to ZERO
             end
 
             pause(2)
+    
+            % put in screen 540 and autoset the oscilloscope to this data
+            % (540 gives the largest signal from previous measurements)
 
-            for i = 1:4
+            app.SaveTextArea.Value = {''; 'Placing in screen 540 for autosetting oscilloscope'; '';};
+            matlabJapc.staticSetSignal('', ['CAS.BTV0420','/Setting#screenSelect'],int32(1)); % Puts in screen
+            pause(3)          
+            app.SaveTextArea.Value = {''; 'Autosetting upstream oscilloscope ';};                
+            Autoset_oscilloscope('CA.SCOPE10.CH01') % Autoset the downstream scope signal
+            pause(2)
+            app.SaveTextArea.Value = {''; 'Autosetting downstream oscilloscope ';};                
+            Autoset_oscilloscope('CA.SCOPE10.CH02') % Autoset the upstream scope signal
+            pause(3)
+
+            
+            for i = 1:length(screen_names)
                 app.SaveTextArea.Value = {''; ['Placing in screen ' num2str(screen_names(i))]; '';};
                 matlabJapc.staticSetSignal('', [BTV{i},'/Setting#screenSelect'],BTV_in(i)); % Puts in screen
-                pause(3)
-                app.SaveTextArea.Value = {''; 'Autosetting upstream oscilloscope ';};                
-                % Autoset_oscilloscope('CA.SCOPE10.CH01') % Autoset the downstream scope signal
-                pause(2)
-                app.SaveTextArea.Value = {''; 'Autosetting downstream oscilloscope ';};                
-                % Autoset_oscilloscope('CA.SCOPE10.CH02') % Autoset the upstream scope signal
                 pause(3)
 
                 app.SaveTextArea.Value = {''; ['Acquiring calibration data for screen ' num2str(screen_names(i))]; '';};                
