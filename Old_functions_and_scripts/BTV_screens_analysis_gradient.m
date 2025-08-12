@@ -1,3 +1,6 @@
+% Script analyses the BTV screens data from 16/07/2025 using the gradient rise method (which was later found to be the most inaccurate method for determining rise time)
+
+
 
 [up_data, down_data, smooth_up_data, smooth_down_data, screens] = get_data('BTV screen data/16072025_BTV_screen_lookup.txt');
 plot_signal_different_screen(up_data, down_data, smooth_up_data, smooth_down_data, screens);
