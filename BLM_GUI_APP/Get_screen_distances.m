@@ -4,7 +4,7 @@ function screen_distances = Get_screen_distances(screen_names)
     % magnet name must be given as a character not a string. 
 
     lookup_table = readtable('Distance_pixel_lookup_new_distances.txt');
-    screen_distances = zeros(length(screen_names));
+    screen_distances = zeros(length(screen_names), 1);
     % return the row in the table which has Name of Beamline Feature ending
     % in the magnet name number
     for i = 1:length(screen_names)
