@@ -948,6 +948,10 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
         % Construct app
         function app = BLM_GUI_APP
 
+            % add path to the app folder
+            parent_folder = fileparts(cd); % get the parent folder of this script
+            addpath(fullfile(parent_folder)); % add path with GUI app
+            
             % Create UIFigure and components
             createComponents(app)
 
