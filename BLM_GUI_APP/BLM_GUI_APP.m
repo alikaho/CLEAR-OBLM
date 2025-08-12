@@ -31,6 +31,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
         DistanceTextArea                matlab.ui.control.TextArea
         OnOffRockerSwitch               matlab.ui.control.RockerSwitch
         SavePlotsButton                 matlab.ui.control.Button
+        LoadPlotsButton                 matlab.ui.control.Button        
         ForceQuitButton                 matlab.ui.control.Button
         PositionPlotAxesPart1           matlab.ui.control.UIAxes
         PositionPlotAxesPart2           matlab.ui.control.UIAxes
@@ -54,8 +55,8 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
         decimation_factor = 10 % decimate the data for faster running by this factor
         total_time
 
-        % Hardware control
-        monitorMTV % Oscilloscope monitor
+        % Monitoring
+        monitorMTV % Oscilloscope monitor, the plotting function is called back by the trigger of this monitor
 
         % App closing and plotting on and off
         stop_request = false % stop_request becomes true when OnOffRockerSwitch switches to "Stop" 
@@ -72,6 +73,8 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
         gradient
         offset
 
+        % Loading saved data filename
+        saved_data_filename
 
     end
     
@@ -342,7 +345,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
         end
 
         % Button pushed function: SavePlotsButton
-        function SavePlotsButtonPushed(app, event)
+        function SavePlotsButtonPushed(app, ~)
             % Function saves the upstream and downstream raw and smoothed
             % data to a txt file. Also saves a screenshot of the position
             % along the beamline where loss occured. 
@@ -558,7 +561,19 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             disp('Scope turned off and on')
         end
 
- 
+         % Button pushed function: LoadPlotsButton
+        function LoadPlotsButtonPushed(app, event)
+            [filename, pathname] = uigetfile('*.txt', 'Select saved data file:');
+            
+            if isequal(filename,0) || isequal(pathname, 0) % if user cancels the file choosing
+                disp('File selection canceled')
+                return
+            end
+
+            disp(filename)
+
+            % app.saved_data_filename = 
+        end
 
     end
 
@@ -627,7 +642,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             % Create LegendAxes
             app.LegendAxes = uiaxes(app.UIFigure);
             title(app.LegendAxes, 'Legend')
-            app.LegendAxes.Title.Color = [1 1 1];              
+            app.LegendAxes.Title.Color = [1 1 1];             
             app.LegendAxes.XColor = 'none';
             app.LegendAxes.XTick = [];
             app.LegendAxes.YColor = 'none';
@@ -635,7 +650,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.LegendAxes.ZColor = 'none';
             app.LegendAxes.Color = 'none';
             app.LegendAxes.FontSize = 14;
-            app.LegendAxes.Position = [15 410 455 95];
+            app.LegendAxes.Position = [15 415 455 95];
 
             % Create CLEARBeamlineAxesPart2
             app.CLEARBeamlineAxesPart2 = uiaxes(app.UIFigure);
@@ -714,6 +729,17 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.PositionPlotAxesPart1.Position = [15 770 770 245];
 
 
+            % Create LoadPlotsButton
+            app.LoadPlotsButton = uibutton(app.UIFigure, 'push');
+            app.LoadPlotsButton.ButtonPushedFcn = createCallbackFcn(app, @LoadPlotsButtonPushed, true);
+            app.LoadPlotsButton.WordWrap = 'on';
+            app.LoadPlotsButton.BackgroundColor = [0.302 0.7451 0.9333];
+            app.LoadPlotsButton.FontSize = 16;
+            app.LoadPlotsButton.FontWeight = 'bold';
+            app.LoadPlotsButton.Position = [685 255 100 35];
+            app.LoadPlotsButton.Text = 'Load Plots';
+
+
             % Create SavePlotsButton
             app.SavePlotsButton = uibutton(app.UIFigure, 'push');
             app.SavePlotsButton.ButtonPushedFcn = createCallbackFcn(app, @SavePlotsButtonPushed, true);
@@ -722,9 +748,8 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.SavePlotsButton.FontSize = 16;
             app.SavePlotsButton.FontWeight = 'bold';
             app.SavePlotsButton.FontColor = [1 1 1];
-            app.SavePlotsButton.Position = [700 265 85 60];
+            app.SavePlotsButton.Position = [685 300 100 35];
             app.SavePlotsButton.Text = 'Save Plots';
-
 
             % Create DistanceTextArea
             app.DistanceTextArea = uitextarea(app.UIFigure);
@@ -732,9 +757,9 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.DistanceTextArea.HorizontalAlignment = 'center';
             app.DistanceTextArea.FontSize = 20;
             app.DistanceTextArea.FontWeight = 'bold';
-            app.DistanceTextArea.FontColor = [1 1 1];
+            app.DistanceTextArea.FontColor = [0.9412 0.9412 0.9412];
             app.DistanceTextArea.BackgroundColor = [0.149 0.149 0.149];
-            app.DistanceTextArea.Position = [488 405 297 32];
+            app.DistanceTextArea.Position = [485 404 300 35];
             app.DistanceTextArea.Value = {'Distance to beam loss:'};
 
             % Create DistanceTextArea_2
@@ -743,9 +768,9 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.DistanceTextArea_2.HorizontalAlignment = 'center';
             app.DistanceTextArea_2.FontSize = 40;
             app.DistanceTextArea_2.FontColor = [1 1 1];
-            app.DistanceTextArea_2.BackgroundColor = [0 0 0];
-            app.DistanceTextArea_2.Position = [488 342 298 55];
-            app.DistanceTextArea_2.Value = {'0'};
+            app.DistanceTextArea_2.BackgroundColor = [0.149 0.149 0.149];
+            app.DistanceTextArea_2.Position = [485 350 300 55];
+            app.DistanceTextArea_2.Value = {'24.8 m'};
 
             % Create DownstreamSensibilityButtonGroup
             app.DownstreamSensibilityButtonGroup = uibuttongroup(app.UIFigure);
@@ -828,18 +853,18 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.LightModeButton.FontSize = 16;
             app.LightModeButton.FontWeight = 'bold';
             app.LightModeButton.FontColor = [0.149 0.149 0.149];
-            app.LightModeButton.Position = [700 115 85 60];
+            app.LightModeButton.Position = [700 110 85 60];
             app.LightModeButton.Text = 'Light Mode';
 
             % Create ResetScopeButton
             app.ResetScopeButton = uibutton(app.UIFigure, 'push');
-            app.ResetScopeButton.ButtonPushedFcn = createCallbackFcn(app, @ResetScopeButtonPressed, true);                
+            app.ResetScopeButton.ButtonPushedFcn = createCallbackFcn(app, @ResetScopeButtonPushed, true);
             app.ResetScopeButton.WordWrap = 'on';
             app.ResetScopeButton.BackgroundColor = [0.6353 0.0784 0.1843];
             app.ResetScopeButton.FontSize = 16;
             app.ResetScopeButton.FontWeight = 'bold';
             app.ResetScopeButton.FontColor = [1 1 1];
-            app.ResetScopeButton.Position = [700 190 85 60];
+            app.ResetScopeButton.Position = [700 180 85 60];
             app.ResetScopeButton.Text = 'Reset Scope';
 
             % Create UpstreamSensibilityButtonGroup
@@ -915,7 +940,8 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.CalibrateButton.BackgroundColor = [0.7176 0.2745 1];
             app.CalibrateButton.FontSize = 16;
             app.CalibrateButton.FontWeight = 'bold';
-            app.CalibrateButton.Position = [702 450 85 62];
+            app.CalibrateButton.FontColor = [1 1 1];
+            app.CalibrateButton.Position = [700 455 85 60];
             app.CalibrateButton.Text = 'Calibrate';
 
             % Create MeasurementLabel
@@ -933,7 +959,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.OnOffRockerSwitch.FontSize = 20;
             app.OnOffRockerSwitch.FontWeight = 'bold';
             app.OnOffRockerSwitch.FontColor = [1 1 1];
-            app.OnOffRockerSwitch.Position = [531 457 108 48];
+            app.OnOffRockerSwitch.Position = [526 460 114 50];
             app.OnOffRockerSwitch.Value = 'Stop';
 
             % Create SaveTextArea
