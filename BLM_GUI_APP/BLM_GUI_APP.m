@@ -125,9 +125,9 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
                 app.MeasurementLabel.Text = sprintf('Measurement number: %s \nCharge at Gun: %s nC \nCharge at THz: %s pC (%0.2s %%)\nCharge at THz2: %s pC (%0.2s %%)', num2str(app.idx_meas), num2str(gun), num2str(THz), num2str(THz_percent), num2str(THz2), num2str(THz2_percent));
                 % app.MeasurementLabel.Text = {'Measurement number: ', num2str(app.idx_meas) 'Charge at Gun (A): ', num2str(round(Gun_charge,3)), 'Charge at THz (A): ', num2str(round(THz_charge,3)), 'Charge at THz2 (A): ', num2str(round(THz2_charge,3)), 'Beam loss (%): ', num2str(100 - round(THz_charge,3)/round(Gun_charge,3) * 100)};                        
 
-                % [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_smoothed_signal(app); % acquire upstream and downstream signal and averaged signal
+                [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_smoothed_signal(app); % acquire upstream and downstream signal and averaged signal
                 % [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_saved_signal("22072025-16:38:18") ; % acquires dry run saved data for given screen number
-                [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_screen_saved_signal(22072025, 390); 
+                % [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_screen_saved_signal(27072025, 215); 
 
 
                 loss_idx_up = Find_rise_time_CFD(smooth_up_data);
@@ -233,8 +233,8 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.idx_meas = 1;
 
             parent_folder = fileparts(cd); % get the parent folder of this script
-            addpath(fullfile(parent_folder, 'BLM_Analysis')); % add path with GUI app
-
+            addpath(fullfile(parent_folder, 'BLM_Analysis')); % add path with Analysis functions
+            addpath(fullfile(parent_folder, 'BLM_GUI_APP')); % add path with GUI app
 
             % addpath /nfs/cs-ccr-nfs6/vol29/Linux/data/clear/MatLab/Operation/Gun_Energy
             % addpath /nfs/cs-ccr-nfs6/vol29/Linux/data/clear/MatLab/Operation/Gun_Energy
