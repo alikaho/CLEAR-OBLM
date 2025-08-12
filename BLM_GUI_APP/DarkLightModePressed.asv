@@ -57,8 +57,7 @@ function DarkLightModePressed(app, event)
         set(allUpstreamButtons, 'BackgroundColor', [1 1 1])
         set(allUpstreamButtons, 'FontColor', [0 0 0])
 
-        app.plot_rise_index_colour = 'blue';
-        app.plot_beam_loss_colour = [0 0 1 0.5];
+        app.plot_beam_loss_colour = [0 0 1];
 
         app.dark_light_mode = 'light';                
 
@@ -119,8 +118,7 @@ function DarkLightModePressed(app, event)
         set(allUpstreamButtons, 'BackgroundColor', [0.149 0.149 0.149])
         set(allUpstreamButtons, 'FontColor', [1 1 1])
         
-        app.plot_rise_index_colour = 'cyan';
-        app.plot_beam_loss_colour = [0 1 1 0.5];
+        app.plot_beam_loss_colour = 'cyan';
         
         app.dark_light_mode = 'dark';                   
 
