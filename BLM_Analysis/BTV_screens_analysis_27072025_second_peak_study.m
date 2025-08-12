@@ -14,3 +14,6 @@ distance = ( Find_fiber_loss_dist_upstream(refr_idx, rise_index_up) - 22.3236 ) 
 fprintf("Distance travelled by second peak upstream: %.3f m\n", distance);
 
 
+% Look at the ratio of the intensity of the second peak to the first peak dependent on the distance
+[up_data, down_data, smooth_up_data, smooth_down_data, screens] = get_data(date);
+
