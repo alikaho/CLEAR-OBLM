@@ -259,8 +259,8 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             % Set the gradient and offset (used in the
             % Convert_fiber_to_beam_dist.m function) to the last saved
             % parameters from Saved_calibration_params.mat
-            app.gradient = load('Saved_calibration_params.mat', 'm').m;
-            app.offset = load('Saved_calibration_params.mat', 'c').c;
+            app.gradient = load('Calibration saved data/Saved_calibration_params.mat', 'm').m;
+            app.offset = load('Calibration saved data/Saved_calibration_params.mat', 'c').c;
 
 
         end
@@ -348,8 +348,9 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             % along the beamline where loss occured. 
             [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_smoothed_signal(app);
             T = table(up_data, down_data, smooth_up_data, smooth_down_data);
-            writetable(T, ['Raw BLM data/BLM_GUI_data_', char(datetime('now', 'Format', 'ddMMyyyy-HH:mm:ss')), '.txt']);
-            exportapp(app.UIFigure, ['Raw BLM data/BLM_GUI_data_', char(datetime('now', 'Format', 'ddMMyyyy-HH:mm:ss')),'.jpg']);
+            parent_folder = fileparts(cd); % get the parent folder of this script
+            writetable(T, [parent_folder, '/BLM_Analysis/Raw BLM data/BLM_GUI_data_', char(datetime('now', 'Format', 'ddMMyyyy-HH:mm:ss')), '.txt']);
+            exportapp(app.UIFigure, [parent_folder, '/BLM_Analysis/Raw BLM data/BLM_GUI_data_', char(datetime('now', 'Format', 'ddMMyyyy-HH:mm:ss')),'.jpg']);
             disp(' ')
             disp('BLM data saved.');
             app.SaveTextArea.Visible = 'on';            
