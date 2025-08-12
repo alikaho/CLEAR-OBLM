@@ -125,9 +125,9 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
                 app.MeasurementLabel.Text = sprintf('Measurement number: %s \nCharge at Gun: %s nC \nCharge at THz: %s pC (%0.2s %%)\nCharge at THz2: %s pC (%0.2s %%)', num2str(app.idx_meas), num2str(gun), num2str(THz), num2str(THz_percent), num2str(THz2), num2str(THz2_percent));
                 % app.MeasurementLabel.Text = {'Measurement number: ', num2str(app.idx_meas) 'Charge at Gun (A): ', num2str(round(Gun_charge,3)), 'Charge at THz (A): ', num2str(round(THz_charge,3)), 'Charge at THz2 (A): ', num2str(round(THz2_charge,3)), 'Beam loss (%): ', num2str(100 - round(THz_charge,3)/round(Gun_charge,3) * 100)};                        
 
-                [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_smoothed_signal(app); % acquire upstream and downstream signal and averaged signal
+                % [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_smoothed_signal(app); % acquire upstream and downstream signal and averaged signal
                 % [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_saved_signal("22072025-16:38:18") ; % acquires dry run saved data for given screen number
-                % [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_screen_saved_signal(22072025, 390); 
+                [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_screen_saved_signal(22072025, 390); 
 
 
                 loss_idx_up = Find_rise_time_CFD(smooth_up_data);
@@ -231,6 +231,10 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             % Initialise and preallocate 
             app.OnOffRockerSwitch.Value = 'Stop';       
             app.idx_meas = 1;
+
+            parent_folder = fileparts(cd); % get the parent folder of this script
+            addpath(fullfile(parent_folder, 'BLM_Analysis')); % add path with GUI app
+
 
             % addpath /nfs/cs-ccr-nfs6/vol29/Linux/data/clear/MatLab/Operation/Gun_Energy
             % addpath /nfs/cs-ccr-nfs6/vol29/Linux/data/clear/MatLab/Operation/Gun_Energy
@@ -410,7 +414,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
 
                 app.SaveTextArea.Value = {''; ['Acquiring calibration data for screen ' num2str(screen_names(i))]; '';};                
                 figs_signal = figure(i);
-                figs_signal.Position = [1000 + i*610 1500 600 600];
+                figs_signal.Position = [1000 + i*610 1500 300 300];
                 [avg_up_data(i, :), avg_down_data(i, :), up_data_all(i, :, :), down_data_all(i, :, :)] = Acquire_averaged_data(app);
                 
                 % Find the rise time and plot on the figure
@@ -439,7 +443,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             reconstructed_positions = Find_fiber_loss_dist_combined_readout_eff_refr_idx(rise_indices_up, rise_indices_down);
 
             fig_fitting = figure(5);
-            fig_fitting.Position = [1800 500 800 800];
+            fig_fitting.Position = [1800 500 500 500];
         
             plot(screen_distances, reconstructed_positions, '.', 'MarkerSize', 20)
             title("Reconstructed positions against known BTV screen distances")
@@ -479,6 +483,9 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.SaveTextArea.Visible = 'on';            
             app.SaveTextArea.Value = {'' ; 'Calibration data saved.' ; ''};
             pause(1)
+
+            m = 1.1587;
+            c = -15.4938;
 
             % Check whether user would like to use the new calibration
             % parameters or not
