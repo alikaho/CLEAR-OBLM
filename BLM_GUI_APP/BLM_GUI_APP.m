@@ -58,9 +58,6 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
         % Monitoring
         monitorMTV % Oscilloscope monitor, the plotting function is called back by the trigger of this monitor
 
-        % App closing and plotting on and off
-        stop_request = false % stop_request becomes true when OnOffRockerSwitch switches to "Stop" 
-
         % Images 
         image1 % CLEAR Beamline part 1
         image2 % CLEAR Beamline part 2
@@ -75,6 +72,8 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
 
         % Loading saved data filename
         saved_data_filename
+        saved_data_pathname
+        dry_run = false % true if loading past data, false if live acquisition
 
     end
     
@@ -97,12 +96,6 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
                 return
             end
 
-            % also come out of the function if the stop_request has been
-            % satisfied
-            if app.stop_request
-                return
-            end
-             
             [Gun_charge, ~, THz_charge, THz2_charge] = Read_BCM; % Read_BCM gets the charge at the gun, THz and THz2. 
 
             total_beam_length = 36.38;
@@ -127,10 +120,12 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
                 app.MeasurementLabel.Text = sprintf('Measurement number: %s \nCharge at Gun: %s nC \nCharge at THz: %s pC (%0.2s %%)\nCharge at THz2: %s pC (%0.2s %%)', num2str(app.idx_meas), num2str(gun), num2str(THz), num2str(THz_percent), num2str(THz2), num2str(THz2_percent));
                 % app.MeasurementLabel.Text = {'Measurement number: ', num2str(app.idx_meas) 'Charge at Gun (A): ', num2str(round(Gun_charge,3)), 'Charge at THz (A): ', num2str(round(THz_charge,3)), 'Charge at THz2 (A): ', num2str(round(THz2_charge,3)), 'Beam loss (%): ', num2str(100 - round(THz_charge,3)/round(Gun_charge,3) * 100)};                        
 
-                [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_smoothed_signal(app); % acquire upstream and downstream signal and averaged signal
-                % [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_saved_signal("22072025-16:38:18") ; % acquires dry run saved data for given screen number
-                % [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_screen_saved_signal(27072025, 215); 
-
+                if app.dry_run
+                    [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_saved_signal(app) ; % acquires dry run saved data for given screen number
+                else
+                    [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_smoothed_signal(app); % acquire upstream and downstream signal and averaged signal 
+                end
+                % [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_screen_saved_signal(27072025, 215);
 
                 loss_idx_up = Find_rise_time_CFD(smooth_up_data);
                 loss_idx_down = Find_rise_time_CFD(smooth_down_data);
@@ -279,7 +274,6 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
                     
                     disp(' ')
                     disp('Starting')
-                    app.stop_request = false;
 
                     % Everytime new data arrives to matlabJapcMonitor, the
                     % callback Plot_signal_beam_loss is called. So plotting
@@ -287,6 +281,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
                     % active:
 
                     matlabJapc.staticSetSignal('','CX.SMEAS-BPMP/OutEnable#outEnabled', 1)
+                    app.dry_run = false;
                     app.monitorMTV.start();
                     % matlabJapcMonitor('SCT.USER.SETUP',{['CA.SCOPE10.CH02','/Acquisition']}, @(data)Plot_signal_beam_loss(app)).start(); % create monitorMTV object with callback to the plotting function (doesn't start plotting yet)
             
@@ -295,8 +290,8 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
 
                     disp(' ')
                     disp('Stopping')
-                    app.monitorMTV.stop() ;
-                    app.stop_request = true;                    
+                    app.dry_run = false;
+                    app.monitorMTV.stop() ;                   
 
                 end
 
@@ -514,9 +509,11 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
 
             app.SaveTextArea.Visible = 'off';
             close all
-           
+                       [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_saved_signal(pathname, filename);
+
 
         end
+
 
 
         % Selection changed function: UpstreamSensibilityButtonGroup
@@ -550,29 +547,41 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
 
 
         % Button pushed function: ResetScopeButton
-        function ResetScopeButtonPressed(~, ~)
+        function ResetScopeButtonPushed(~, ~)
             
+            disp(' ')
+            disp('NB. still have not figured out how to ON and OFF (button in right hand corner of OASIS viewer), this button only turns the scope triggering on and off (blinking green on left hand side)')
             disp(' ')
             disp('Resetting scope')
             matlabJapc.staticSetSignal('','CX.SMEAS-BPMP/OutEnable#outEnabled', 0)
             pause(2)
             matlabJapc.staticSetSignal('','CX.SMEAS-BPMP/OutEnable#outEnabled', 1)
             waitfor(matlabJapc.staticGetSignal('','CX.SMEAS-BPMP/OutEnable#outEnabled'))
-            disp('Scope turned off and on')
+            disp('Scope trigger turned off and on')
+            disp(' ')
+
         end
 
          % Button pushed function: LoadPlotsButton
         function LoadPlotsButtonPushed(app, event)
+
+            app.monitorMTV.stop()
+
             [filename, pathname] = uigetfile('*.txt', 'Select saved data file:');
             
             if isequal(filename,0) || isequal(pathname, 0) % if user cancels the file choosing
                 disp('File selection canceled')
+                app.dry_run = false;
                 return
             end
 
-            disp(filename)
+            app.dry_run = true;
 
-            % app.saved_data_filename = 
+            app.saved_data_filename = filename;
+            app.saved_data_pathname = pathname;
+
+            app.monitorMTV.start()
+
         end
 
     end
@@ -734,6 +743,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.LoadPlotsButton.ButtonPushedFcn = createCallbackFcn(app, @LoadPlotsButtonPushed, true);
             app.LoadPlotsButton.WordWrap = 'on';
             app.LoadPlotsButton.BackgroundColor = [0.302 0.7451 0.9333];
+            app.LoadPlotsButton.FontColor = [1 1 1];            
             app.LoadPlotsButton.FontSize = 16;
             app.LoadPlotsButton.FontWeight = 'bold';
             app.LoadPlotsButton.Position = [685 255 100 35];
@@ -768,7 +778,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.DistanceTextArea_2.HorizontalAlignment = 'center';
             app.DistanceTextArea_2.FontSize = 40;
             app.DistanceTextArea_2.FontColor = [1 1 1];
-            app.DistanceTextArea_2.BackgroundColor = [0.149 0.149 0.149];
+            app.DistanceTextArea_2.BackgroundColor = [0 0 0];
             app.DistanceTextArea_2.Position = [485 350 300 55];
             app.DistanceTextArea_2.Value = {'24.8 m'};
 
