@@ -59,6 +59,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
 
         % App closing and plotting on and off
         stop_request = false % stop_request becomes true when OnOffRockerSwitch switches to "Stop" 
+        is_plotting = false
 
         % Images 
         image1 % CLEAR Beamline part 1
@@ -161,13 +162,13 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
                 % plot the beam loss points (only if they are
                 % within a physical index range)
                 if loss_idx_up > 0 && loss_idx_up <= 1000
-                    scatter(app.UIAxes2,loss_idx_up,up_data(loss_idx_up), app.plot_rise_index_colour,'filled')
+                    scatter(app.UIAxes2,loss_idx_up,up_data(loss_idx_up), 'cyan,'filled')
                     scatter(app.UIAxes4,loss_idx_up,smooth_up_data(loss_idx_up), app.plot_rise_index_colour,'filled')
                 end
 
                 if loss_idx_down > 0 && loss_idx_down <= 1000
-                    scatter(app.UIAxes1,loss_idx_down,down_data(loss_idx_down),app.plot_rise_index_colour,'filled')
-                    scatter(app.UIAxes3,loss_idx_down,smooth_down_data(loss_idx_down),app.plot_rise_index_colour,'filled')
+                    scatter(app.UIAxes1,loss_idx_down,down_data(loss_idx_down),app.plot_beam_loss_colour,'filled')
+                    scatter(app.UIAxes3,loss_idx_down,smooth_down_data(loss_idx_down),app.plot_beam_loss_colour,'filled')
                 end
 
                 hold(app.UIAxes1, 'off')
@@ -271,7 +272,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
 
                     matlabJapc.staticSetSignal('','CX.SMEAS-BPMP/OutEnable#outEnabled', 1)
                     app.monitorMTV.start();
-                    % matlabJapcMonitor('SCT.USER.SETUP',{['CA.SCOPE10.CH02','/Acquisition']}, @(data)Plot_signal_beam_loss(app)).start(); % create monitorMTV object with callback to the plotting function (doesn't start plotting yet)
+                    matlabJapcMonitor('SCT.USER.SETUP',{['CA.SCOPE10.CH02','/Acquisition']}, @(data)Plot_signal_beam_loss(app)).start(); % create monitorMTV object with callback to the plotting function (doesn't start plotting yet)
             
 
                 elseif strcmpi(value, 'Stop')                    
