@@ -1,4 +1,4 @@
-function [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_saved_signal(date_time)
+function [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_saved_signal_datetime(date_time)
 % Calls back the txt file from Raw BLM data from a certain date and time
 
     parent_folder = fileparts(cd); % get the parent folder of this script

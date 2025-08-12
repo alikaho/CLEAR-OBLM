@@ -5,6 +5,7 @@ function DarkLightModePressed(app, event)
         app.UIFigure.Color = [0.9412 0.9412 0.9412];
 
         app.LightModeButton.BackgroundColor = [0 0.4471 0.7412];
+        app.LightModeButton.FontColor = [1 1 1];          
         app.LightModeButton.Text = 'Dark Mode';
 
         app.CLEARBeamlineAxesPart2.Title.Color = [0 0 0];                
@@ -66,6 +67,7 @@ function DarkLightModePressed(app, event)
         app.UIFigure.Color = [0.149 0.149 0.149];  
 
         app.LightModeButton.BackgroundColor = [0.9294 0.6941 0.1255];
+        app.LightModeButton.FontColor = [0 0 0];        
         app.LightModeButton.Text = 'Light Mode';
 
         app.CLEARBeamlineAxesPart2.Title.Color = [1 1 1];                
@@ -109,7 +111,6 @@ function DarkLightModePressed(app, event)
         app.DownstreamSensibilityButtonGroup.ForegroundColor = [1 1 1];
         app.UpstreamSensibilityButtonGroup.ForegroundColor = [1 1 1];            
         app.SetOscilloscopeSensibilityLabel.FontColor = [1 1 1];
-
 
         allDownstreamButtons = app.DownstreamSensibilityButtonGroup.Children;
         set(allDownstreamButtons, 'BackgroundColor', [0.149 0.149 0.149])
