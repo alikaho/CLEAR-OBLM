@@ -74,7 +74,6 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
 
 
 
-
     end
     
 
@@ -169,13 +168,13 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
                 % plot the beam loss points (only if they are
                 % within a physical index range)
                 if loss_idx_up > 0 && loss_idx_up <= 1000
-                    scatter(app.UIAxes2,loss_idx_up,up_data(loss_idx_up),'cyan','filled')
-                    scatter(app.UIAxes4,loss_idx_up,smooth_up_data(loss_idx_up),'cyan','filled')
+                    scatter(app.UIAxes2,loss_idx_up,up_data(loss_idx_up),app.plot_beam_loss_colour,'filled')
+                    scatter(app.UIAxes4,loss_idx_up,smooth_up_data(loss_idx_up),app.plot_beam_loss_colour,'filled')
                 end
 
                 if loss_idx_down > 0 && loss_idx_down <= 1000
-                    scatter(app.UIAxes1,loss_idx_down,down_data(loss_idx_down),'cyan','filled')
-                    scatter(app.UIAxes3,loss_idx_down,smooth_down_data(loss_idx_down),'cyan','filled')
+                    scatter(app.UIAxes1,loss_idx_down,down_data(loss_idx_down),app.plot_beam_loss_colour,'filled')
+                    scatter(app.UIAxes3,loss_idx_down,smooth_down_data(loss_idx_down),app.plot_beam_loss_colour,'filled')
                 end
 
                 hold(app.UIAxes1, 'off')
@@ -476,16 +475,17 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             disp(' ')
             disp('Calibration data saved.');
             app.SaveTextArea.Visible = 'on';            
-            app.SaveTextArea.Value = {'' ; 'Calibration parameters saved.' ; ''};
+            app.SaveTextArea.Value = {'' ; 'Calibration data saved.' ; ''};
             pause(1)
 
             % Check whether user would like to use the new calibration
             % parameters or not
             use_calibration_params = Confirm_use_new_calibration_params(app);
             if use_calibration_params
-                app.gradient = m;
-                app.offset = c;
+                save('Saved_calibration_params.txt', m, c)
+                disp('New calibration paramaters saved')
             else
+                disp('Kept old calibration parameters')
             end
 
             app.SaveTextArea.Visible = 'off';
