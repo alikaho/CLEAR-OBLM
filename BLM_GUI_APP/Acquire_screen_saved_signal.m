@@ -1,6 +1,6 @@
 function [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_screen_saved_signal(date, screen)
 % Calls back the txt file from 16072025 saved data from BTV screen data for a given
-% screen number
+% screen number. Example: [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_screen_saved_signal(27072025, 215);
 
     parent_folder = fileparts(cd); % get the parent folder of this script
     all_data = table2array(readtable(parent_folder + "/BLM_Analysis/BTV screen data/BLM_GUI_data_" + num2str(date) + "_BTV_" + num2str(screen) + ".txt"));

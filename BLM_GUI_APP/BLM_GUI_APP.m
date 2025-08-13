@@ -4,28 +4,28 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
     properties (Access = public)
         UIFigure                        matlab.ui.Figure   
         CalibrateButton                 matlab.ui.control.Button        
-        MeasurementLabel                 matlab.ui.control.Label
+        MeasurementLabel                matlab.ui.control.Label
         UpstreamSensibilityButtonGroup  matlab.ui.container.ButtonGroup
-        AutosetUpstreamScopeButton                 matlab.ui.control.Button
-        mVdivButtonUp_5                  matlab.ui.control.ToggleButton
-        mVdivButtonUp_10                  matlab.ui.control.ToggleButton
-        mVdivButtonUp_20                  matlab.ui.control.ToggleButton
-        mVdivButtonUp_50                  matlab.ui.control.ToggleButton
-        mVdivButtonUp_100                  matlab.ui.control.ToggleButton
-        mVdivButtonUp_200                   matlab.ui.control.ToggleButton
-        mVdivButtonUp_500                   matlab.ui.control.ToggleButton
+        AutosetUpstreamScopeButton      matlab.ui.control.Button
+        mVdivButtonUp_5                 matlab.ui.control.ToggleButton
+        mVdivButtonUp_10                matlab.ui.control.ToggleButton
+        mVdivButtonUp_20                matlab.ui.control.ToggleButton
+        mVdivButtonUp_50                matlab.ui.control.ToggleButton
+        mVdivButtonUp_100               matlab.ui.control.ToggleButton
+        mVdivButtonUp_200               matlab.ui.control.ToggleButton
+        mVdivButtonUp_500               matlab.ui.control.ToggleButton
         ResetScopeButton                matlab.ui.control.Button
         LightModeButton                 matlab.ui.control.Button
         SetOscilloscopeSensibilityLabel matlab.ui.control.Label
         DownstreamSensibilityButtonGroup matlab.ui.container.ButtonGroup
         AutosetDownstreamScopeButton    matlab.ui.control.Button
-        mVdivButtonDown_5                  matlab.ui.control.ToggleButton
-        mVdivButtonDown_10                  matlab.ui.control.ToggleButton
-        mVdivButtonDown_20                  matlab.ui.control.ToggleButton
-        mVdivButtonDown_50                  matlab.ui.control.ToggleButton
-        mVdivButtonDown_100                  matlab.ui.control.ToggleButton
-        mVdivButtonDown_200                   matlab.ui.control.ToggleButton
-        mVdivButtonDown_500                   matlab.ui.control.ToggleButton
+        mVdivButtonDown_5               matlab.ui.control.ToggleButton
+        mVdivButtonDown_10              matlab.ui.control.ToggleButton
+        mVdivButtonDown_20              matlab.ui.control.ToggleButton
+        mVdivButtonDown_50              matlab.ui.control.ToggleButton
+        mVdivButtonDown_100             matlab.ui.control.ToggleButton
+        mVdivButtonDown_200             matlab.ui.control.ToggleButton
+        mVdivButtonDown_500             matlab.ui.control.ToggleButton
         mVdivButton                     matlab.ui.control.ToggleButton
         DistanceTextArea_2              matlab.ui.control.TextArea
         SaveTextArea                    matlab.ui.control.TextArea
@@ -52,7 +52,6 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
         % Operation parameters
         idx_meas = 1 % current measurement index
         nb_meas = 100000 % total number of measurements to take 
-        time_pts = 1000 % number of time points per measurement (each point every 1ns)
         decimation_factor = 10 % decimate the data for faster running by this factor
         total_time
 
@@ -109,9 +108,6 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
                 display(['Meas: ', num2str(app.idx_meas), ' Charge Gun: ', num2str(round(Gun_charge,3)),' Charge THz: ', num2str(round(THz_charge,3)),' Charge THz2: ', num2str(round(THz2_charge,3))])
                 % disp(['Meas: ' num2str(app.idx_meas)])
 
-                time_plot = linspace(0, app.total_time, app.time_pts); % time points for plotting, determined by the total time shown and the amount of time points we take.
-                % for faster plotting, can use a lower app.time_pts
-
                 gun = round(Gun_charge,3);
                 THz = round(THz_charge,3) * 1000;
                 THz2 = round(THz2_charge,3) * 1000;
@@ -126,7 +122,6 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
                 else
                     [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_smoothed_signal(app); % acquire upstream and downstream signal and averaged signal 
                 end
-                % [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_screen_saved_signal(27072025, 215);
 
                 loss_idx_up = Find_rise_time_CFD(smooth_up_data);
                 loss_idx_down = Find_rise_time_CFD(smooth_down_data);
