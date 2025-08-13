@@ -1,5 +1,5 @@
 % Button pushed function: LightModeButton
-function DarkLightModePressed(app, event)
+function DarkLightModePushed(app, event)
     
     if strcmp(app.dark_light_mode, 'dark') % if currently in dark mode
         app.UIFigure.Color = [0.9412 0.9412 0.9412];
