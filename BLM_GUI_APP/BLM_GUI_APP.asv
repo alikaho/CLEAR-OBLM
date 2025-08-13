@@ -6,25 +6,26 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
         CalibrateButton                 matlab.ui.control.Button        
         MeasurementLabel                 matlab.ui.control.Label
         UpstreamSensibilityButtonGroup  matlab.ui.container.ButtonGroup
-        AutosetButton_2                 matlab.ui.control.ToggleButton
-        mVdivButton_14                  matlab.ui.control.ToggleButton
-        mVdivButton_13                  matlab.ui.control.ToggleButton
-        mVdivButton_12                  matlab.ui.control.ToggleButton
-        mVdivButton_11                  matlab.ui.control.ToggleButton
-        mVdivButton_10                  matlab.ui.control.ToggleButton
-        mVdivButton_9                   matlab.ui.control.ToggleButton
-        mVdivButton_8                   matlab.ui.control.ToggleButton
+        AutosetUpstreamScopeButton                 matlab.ui.control.Button
+        mVdivButtonUp_5                  matlab.ui.control.ToggleButton
+        mVdivButtonUp_10                  matlab.ui.control.ToggleButton
+        mVdivButtonUp_20                  matlab.ui.control.ToggleButton
+        mVdivButtonUp_50                  matlab.ui.control.ToggleButton
+        mVdivButtonUp_100                  matlab.ui.control.ToggleButton
+        mVdivButtonUp_200                   matlab.ui.control.ToggleButton
+        mVdivButtonUp_500                   matlab.ui.control.ToggleButton
         ResetScopeButton                matlab.ui.control.Button
         LightModeButton                 matlab.ui.control.Button
-        SetOscilloscopeSensibilityLabel  matlab.ui.control.Label
-        DownstreamSensibilityButtonGroup  matlab.ui.container.ButtonGroup
-        AutosetButton                   matlab.ui.control.ToggleButton
-        mVdivButton_7                   matlab.ui.control.ToggleButton
-        mVdivButton_6                   matlab.ui.control.ToggleButton
-        mVdivButton_5                   matlab.ui.control.ToggleButton
-        mVdivButton_4                   matlab.ui.control.ToggleButton
-        mVdivButton_3                   matlab.ui.control.ToggleButton
-        mVdivButton_2                   matlab.ui.control.ToggleButton
+        SetOscilloscopeSensibilityLabel matlab.ui.control.Label
+        DownstreamSensibilityButtonGroup matlab.ui.container.ButtonGroup
+        AutosetDownstreamScopeButton    matlab.ui.control.Button
+        mVdivButtonDown_5                  matlab.ui.control.ToggleButton
+        mVdivButtonDown_10                  matlab.ui.control.ToggleButton
+        mVdivButtonDown_20                  matlab.ui.control.ToggleButton
+        mVdivButtonDown_50                  matlab.ui.control.ToggleButton
+        mVdivButtonDown_100                  matlab.ui.control.ToggleButton
+        mVdivButtonDown_200                   matlab.ui.control.ToggleButton
+        mVdivButtonDown_500                   matlab.ui.control.ToggleButton
         mVdivButton                     matlab.ui.control.ToggleButton
         DistanceTextArea_2              matlab.ui.control.TextArea
         SaveTextArea                    matlab.ui.control.TextArea
@@ -242,11 +243,19 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
                 disp('OK')
             end
        
-            % Initialise the OASIS viewer of the oscciloscope signals:
+            % Initialise the depressed sensibility buttons to what is shown
+            % on the OASIS viewer:
 
-            matlabJapc.staticSetSignal('SCT.USER.SETUP','CA.SCOPE10.CH01/Sensibility#value', 0.05) % sets to 5mV/div view
-            matlabJapc.staticSetSignal('SCT.USER.SETUP','CA.SCOPE10.CH02/Sensibility#value', 0.05) % sets to 5mV/div view
-            
+            sensibility = matlabJapc.staticGetSignal('SCT.USER.SETUP','CA.SCOPE10.CH01/Sensibility#value'); % checks what the upstream sensibility is set to
+            % sensibility_text = [num2str(sensibility * 100), 'mV/div'];
+             button_number = sensibility * 100 
+               buttonName = ['mVdivButton_' num2str(i)];
+                app.UpstreamSensibilityButtonGroup.SelectedObject = app.buttonName;
+
+
+            % matlabJapc.staticSetSignal('SCT.USER.SETUP','CA.SCOPE10.CH01/Sensibility#value', 0.05) % sets to 5mV/div view
+            % matlabJapc.staticSetSignal('SCT.USER.SETUP','CA.SCOPE10.CH02/Sensibility#value', 0.05) % sets to 5mV/div view
+            % 
             % Start monitoring the triggering of the scope. This will
             % callbak to the plotting function and will be started and
             % stopped by the rocker switch.
@@ -311,7 +320,6 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             disp('Closing')
             close all
 
-            app.stop_request = true;
             app.OnOffRockerSwitch.Value = 'Stop';            
             app.monitorMTV.stop()
             delete(app.UIFigure)
@@ -359,211 +367,62 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
 
 
 
-        % Button pushed function: CalibrateButton
-        function CalibrateButtonPushed(app, ~)
-
-            % come out of function if app has been deleted
-            if ~isvalid(app)
-                return
-            end
-
-            calibration_confirm = Confirm_screen_inserting(app);
-
-            if calibration_confirm
-                disp('Calibration going ahead')
-            else 
-                return
-            end
-
-            app.SaveTextArea.Visible = 'on';
-            app.SaveTextArea.Value = {'' ; 'Beginning Calibration ... ' ; ''};
-            disp('Beginning Calibration')
-
-
-            screen_names = [215, 235, 390, 540, 620, 730, 810]; % nb that 540 is controlled with CAS.BTV0420, and screen 235 is actually controlled by CA.BTV0125
-            BTV = {'CA.BTV0215', 'CA.BTV0125', 'CA.BTV0390','CAS.BTV0420', 'CA.BTV0620', 'CA.BTV0730','CA.BTV0810'};
-            BTV_in = [int32(1), int32(1), int32(2), int32(1), int32(1), int32(1), int32(1)]; %int32(2) looks like "SECOND", int32(1) looks like "FIRST"
-            screen_distances = zeros(length(screen_names), 1);
-            screen_distances([1,3:7]) = Get_screen_distances(screen_names([1,3:7])); % Screen 540 has distance recorded, but 235 doesn't so what is here is an estimate
-            screen_distances(2) = 7.07; % approximate (+- 0.3m) distance to screen 235
-            % screen_distances = [20.6 26.04 29.75 32.55]; % would like to call these directly from the lookup table
-            rise_indices_up = zeros(1, length(screen_names));
-            rise_indices_down = zeros(1, length(screen_names));
-            avg_up_data = zeros(length(screen_names), 1000);
-            avg_down_data = zeros(length(screen_names), 1000);
-            up_data_all = zeros(length(screen_names), 10, 1000);
-            down_data_all = zeros(length(screen_names), 10, 1000);
-
-
-            % Take out all screens beforehand 
-            for i = 1:length(screen_names)
-                matlabJapc.staticSetSignal('', [BTV{i},'/Setting#screenSelect'],int32(0)); % Sets screen out to ZERO
-            end
-
-            pause(2)
-
-            % put in screen 540 and autoset the oscilloscope to this data
-            % (540 gives the largest signal from previous measurements)
-
-            app.SaveTextArea.Value = {''; 'Placing in screen 540 for autosetting oscilloscope'; '';};
-            matlabJapc.staticSetSignal('', ['CAS.BTV0420','/Setting#screenSelect'],int32(1)); % Puts in 540 screen
-            pause(2)          
-            app.SaveTextArea.Value = {''; 'Autosetting upstream oscilloscope ';};                
-            Autoset_oscilloscope('CA.SCOPE10.CH01') % Autoset the downstream scope signal
-            app.SaveTextArea.Value = {''; 'Autosetting downstream oscilloscope ';};                
-            Autoset_oscilloscope('CA.SCOPE10.CH02') % Autoset the upstream scope signal
-            pause(2)
-            matlabJapc.staticSetSignal('', ['CAS.BTV0420','/Setting#screenSelect'],int32(0)); % Takes out 540 screen
-
-            for i = 1:length(screen_names)
-                app.SaveTextArea.Value = {''; ['Placing in screen ' num2str(screen_names(i))]; '';};
-                matlabJapc.staticSetSignal('', [BTV{i},'/Setting#screenSelect'],BTV_in(i)); % Puts in screen
-                pause(3)
-
-                app.SaveTextArea.Value = {''; ['Acquiring calibration data for screen ' num2str(screen_names(i))]; '';};                
-                figs_signal = figure(i);
-                figs_signal.Position = [i*310 100 300 300];
-                [avg_up_data(i, :), avg_down_data(i, :), up_data_all(i, :, :), down_data_all(i, :, :)] = Acquire_averaged_data(app);
-
-                % Find the rise time and plot on the figure
-                rise_indices_up(i) = Find_rise_time_CFD(avg_up_data(i,:)) ;
-                rise_indices_down(i) = Find_rise_time_CFD(avg_down_data(i,:)) ;
-                scatter(rise_indices_up(i), avg_up_data(i, rise_indices_up(i)))
-                scatter(rise_indices_down(i), avg_down_data(i, rise_indices_down(i)))
-
-                app.SaveTextArea.Value = {''; ['Taking out screen ' num2str(screen_names(i))]; '';};
-                matlabJapc.staticSetSignal('', [BTV{i},'/Setting#screenSelect'],int32(0)); % Sets screen out to ZERO
-                pause(3)
-
-                % check if screen is out before continuing - will have to
-                % see because can't use continue here I don't think
-                savefig(figs_signal, ['Calibration saved data/BLM_GUI_screen_', num2str(screen_names(i)), '_calibration_data_', char(datetime('now', 'Format', 'ddMMyyyy-HH:mm:ss')), '.fig'])     
-
-
-            end
-
-
-            % Find and plot the reconstructed positions against the real
-            % positions of the screens
-            app.SaveTextArea.Value = {''; 'Reconstructing positions ... ' ; '';};
-
-
-            reconstructed_positions = Find_fiber_loss_dist_combined_readout_eff_refr_idx(rise_indices_up, rise_indices_down);
-
-            fig_fitting = figure(5);
-            fig_fitting.Position = [1800 500 500 500];
-
-            plot(screen_distances, reconstructed_positions, '.', 'MarkerSize', 20)
-            title("Reconstructed positions against known BTV screen distances")
-            subtitle("Constant Fraction Discriminator (CFD) method")
-            xlabel("BTV screen distances (m)")
-            ylabel("Reconstructed screen positions (m)")
-            text(screen_distances, reconstructed_positions, sprintfc('  %d', screen_names))
-            hold on            
-
-
-            % fit with straight line
-            fit = polyfit(screen_distances, reconstructed_positions, 1);
-            m = fit(1); % fitting gradient
-            c = fit(2); % fitting offset
-
-            % plot straight line
-            screen_distances_plot = [screen_distances(1),screen_distances(end)];
-            expected_screen_distances =  m * screen_distances_plot + c;
-
-            plot(screen_distances_plot, expected_screen_distances, 'LineWidth', 2)
-            text(screen_distances_plot(1) + 5, expected_screen_distances(1) + 1, [' Fit: y = ' num2str(m) 'x + ' num2str(c)])
-
-            distances_rms = m * screen_distances + c;
-            rms = rmse(distances_rms, reconstructed_positions); % find root mean squared error between the predicted rise indices and the observed rise indices
-            text(screen_distances_plot(1) + 5, expected_screen_distances(1) + 0.75, ['RMS value = ' num2str(rms)])
-
-
-            % Save all the calibration data and plot
-            all_data = table(up_data_all, down_data_all);
-            avg_data = table(avg_up_data, avg_down_data);
-            writetable(all_data, ['Calibration saved data/BLM_GUI_calibration_all_data_', char(datetime('now', 'Format', 'ddMMyyyy-HH:mm:ss')), '.txt']);
-            writetable(avg_data, ['Calibration saved data/BLM_GUI_calibration_averaged_data_', char(datetime('now', 'Format', 'ddMMyyyy-HH:mm:ss')), '.txt']);            
-            savefig(fig_fitting, ['Calibration saved data/BLM_GUI_calibration_fit_', char(datetime('now', 'Format', 'ddMMyyyy-HH:mm:ss')), '.fig'])                 
-
-            disp(' ')
-            disp('Calibration data saved.');
-            app.SaveTextArea.Visible = 'on';            
-            app.SaveTextArea.Value = {'' ; 'Calibration data saved.' ; ''};
-            pause(1)
-
-            % m = 1.1587;
-            % c = -15.4938;
-
-            % Check whether user would like to use the new calibration
-            % parameters or not
-            use_calibration_params = Confirm_use_new_calibration_params(app);
-            if use_calibration_params
-                save('Calibration saved data/Saved_calibration_params.mat', 'm', 'c')
-                app.gradient = m;
-                app.offset = c;
-                disp('New calibration paramaters saved')
-            else
-                disp('Keeping old calibration parameters')
-            end
-
-            app.SaveTextArea.Visible = 'off';
-            close all
-                       [up_data, down_data, smooth_up_data, smooth_down_data] = Acquire_saved_signal(pathname, filename);
-
-
-        end
-
-
-
         % Selection changed function: UpstreamSensibilityButtonGroup
-        function UpstreamSensibilityChanged(app, event)
+        function UpstreamSensibilityChanged(app, ~)
             selectedButton = app.UpstreamSensibilityButtonGroup.SelectedObject.Text;
 
-            if strcmp(selectedButton, 'Auto set') % if Autoset is clicked
-                Autoset_oscilloscope('CA.SCOPE10.CH01') % Autoset function for channel 1
-            else
-                selectedButton(end-5:end) = [];
-                sensibility = str2double(selectedButton)*0.01;
-                matlabJapc.staticSetSignal('SCT.USER.SETUP','CA.SCOPE10.CH01/Sensibility#value', sensibility)           
-            end
-        
+            selectedButton(end-5:end) = [];
+            sensibility = str2double(selectedButton)*0.01;
+            matlabJapc.staticSetSignal('SCT.USER.SETUP','CA.SCOPE10.CH01/Sensibility#value', sensibility)           
         end
 
 
 
         % Selection changed function: DownstreamSensibilityButtonGroup
-        function DownstreamSensibilityChanged(app, event)
+        function DownstreamSensibilityChanged(app, ~)
             selectedButton = app.DownstreamSensibilityButtonGroup.SelectedObject.Text;
-            if strcmp(selectedButton, 'Auto set') % if Autoset is clicked
-                Autoset_oscilloscope('CA.SCOPE10.CH02') % Autoset function for channel 2
-            else
-                selectedButton(end-5:end) = [];
-                sensibility = str2double(selectedButton)*0.01;
-                matlabJapc.staticSetSignal('SCT.USER.SETUP','CA.SCOPE10.CH02/Sensibility#value', sensibility)           
-            end
+
+            selectedButton(end-5:end) = [];
+            sensibility = str2double(selectedButton)*0.01;
+            matlabJapc.staticSetSignal('SCT.USER.SETUP','CA.SCOPE10.CH02/Sensibility#value', sensibility)           
 
         end
 
+        % Button pushed function: AutosetDownstreamScopeButton
+        function AutosetDownstreamScopeButtonPushed(app, ~)
+            
+            Autoset_oscilloscope(app, 'CA.SCOPE10.CH02') % Autoset function for channel 2
+
+        end
+
+        % Button pushed function: AutosetUpstreamScopeButton
+        function AutosetUpstreamScopeButtonPushed(app, ~)
+            
+            Autoset_oscilloscope(app, 'CA.SCOPE10.CH01') % Autoset function for channel 1
+
+        end        
 
         % Button pushed function: ResetScopeButton
         function ResetScopeButtonPushed(~, ~)
             
+            disp(' ')
+            disp('NB. still have not figured out how to ON and OFF (button in right hand corner of OASIS viewer), this button only turns the scope triggering on and off (blinking green on left hand side)')
             disp(' ')
             disp('Resetting scope')
             matlabJapc.staticSetSignal('','CX.SMEAS-BPMP/OutEnable#outEnabled', 0)
             pause(2)
             matlabJapc.staticSetSignal('','CX.SMEAS-BPMP/OutEnable#outEnabled', 1)
             waitfor(matlabJapc.staticGetSignal('','CX.SMEAS-BPMP/OutEnable#outEnabled'))
-            disp('Scope turned off and on')
-
+            disp('Scope trigger turned off and on')
+            disp(' ')
 
         end
 
          % Button pushed function: LoadPlotsButton
-        function LoadPlotsButtonPushed(app, event)
-
+        function LoadPlotsButtonPushed(app, ~)
+            
             app.monitorMTV.stop()
+            app.OnOffRockerSwitch.Value = 'Stop';
 
             [filename, pathname] = uigetfile('*.txt', 'Select saved data file:');
             
@@ -741,6 +600,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.LoadPlotsButton.ButtonPushedFcn = createCallbackFcn(app, @LoadPlotsButtonPushed, true);
             app.LoadPlotsButton.WordWrap = 'on';
             app.LoadPlotsButton.BackgroundColor = [0.302 0.7451 0.9333];
+            app.LoadPlotsButton.FontColor = [1 1 1];            
             app.LoadPlotsButton.FontSize = 16;
             app.LoadPlotsButton.FontWeight = 'bold';
             app.LoadPlotsButton.Position = [685 255 100 35];
@@ -788,62 +648,63 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.DownstreamSensibilityButtonGroup.BackgroundColor = [0.149 0.149 0.149];
             app.DownstreamSensibilityButtonGroup.Position = [485 15 100 210];
 
-            % Create mVdivButton
-            app.mVdivButton = uitogglebutton(app.DownstreamSensibilityButtonGroup);
-            app.mVdivButton.Text = '5mV/div';
-            app.mVdivButton.BackgroundColor = [0.149 0.149 0.149];
-            app.mVdivButton.FontColor = [1 1 1];
-            app.mVdivButton.Position = [10 160 80 20];
-            app.mVdivButton.Value = true;
+            % Create mVdivButtonDown_5
+            app.mVdivButtonDown_5 = uitogglebutton(app.DownstreamSensibilityButtonGroup);
+            app.mVdivButtonDown_5.Text = '5mV/div';
+            app.mVdivButtonDown_5.BackgroundColor = [0.149 0.149 0.149];
+            app.mVdivButtonDown_5.FontColor = [1 1 1];
+            app.mVdivButtonDown_5.Position = [10 160 80 20];
+            app.mVdivButtonDown_5.Value = true;
 
-            % Create mVdivButton_2
-            app.mVdivButton_2 = uitogglebutton(app.DownstreamSensibilityButtonGroup);
-            app.mVdivButton_2.Text = '10mV/div';
-            app.mVdivButton_2.BackgroundColor = [0.149 0.149 0.149];
-            app.mVdivButton_2.FontColor = [1 1 1];
-            app.mVdivButton_2.Position = [10 140 80 20];
+            % Create mVdivButtonDown_10
+            app.mVdivButtonDown_10 = uitogglebutton(app.DownstreamSensibilityButtonGroup);
+            app.mVdivButtonDown_10.Text = '10mV/div';
+            app.mVdivButtonDown_10.BackgroundColor = [0.149 0.149 0.149];
+            app.mVdivButtonDown_10.FontColor = [1 1 1];
+            app.mVdivButtonDown_10.Position = [10 140 80 20];
 
-            % Create mVdivButton_3
-            app.mVdivButton_3 = uitogglebutton(app.DownstreamSensibilityButtonGroup);
-            app.mVdivButton_3.Text = '20mV/div';
-            app.mVdivButton_3.BackgroundColor = [0.149 0.149 0.149];
-            app.mVdivButton_3.FontColor = [1 1 1];
-            app.mVdivButton_3.Position = [10 120 80 20];
+            % Create mVdivButtonDown_20
+            app.mVdivButtonDown_20 = uitogglebutton(app.DownstreamSensibilityButtonGroup);
+            app.mVdivButtonDown_20.Text = '20mV/div';
+            app.mVdivButtonDown_20.BackgroundColor = [0.149 0.149 0.149];
+            app.mVdivButtonDown_20.FontColor = [1 1 1];
+            app.mVdivButtonDown_20.Position = [10 120 80 20];
 
-            % Create mVdivButton_4
-            app.mVdivButton_4 = uitogglebutton(app.DownstreamSensibilityButtonGroup);
-            app.mVdivButton_4.Text = '50mV/div';
-            app.mVdivButton_4.BackgroundColor = [0.149 0.149 0.149];
-            app.mVdivButton_4.FontColor = [1 1 1];
-            app.mVdivButton_4.Position = [10 100 80 20];
+            % Create mVdivButtonDown_50
+            app.mVdivButtonDown_50 = uitogglebutton(app.DownstreamSensibilityButtonGroup);
+            app.mVdivButtonDown_50.Text = '50mV/div';
+            app.mVdivButtonDown_50.BackgroundColor = [0.149 0.149 0.149];
+            app.mVdivButtonDown_50.FontColor = [1 1 1];
+            app.mVdivButtonDown_50.Position = [10 100 80 20];
 
-            % Create mVdivButton_5
-            app.mVdivButton_5 = uitogglebutton(app.DownstreamSensibilityButtonGroup);
-            app.mVdivButton_5.Text = '100mV/div';
-            app.mVdivButton_5.BackgroundColor = [0.149 0.149 0.149];
-            app.mVdivButton_5.FontColor = [1 1 1];
-            app.mVdivButton_5.Position = [10 80 80 20];
+            % Create mVdivButtonDown_100
+            app.mVdivButtonDown_100 = uitogglebutton(app.DownstreamSensibilityButtonGroup);
+            app.mVdivButtonDown_100.Text = '100mV/div';
+            app.mVdivButtonDown_100.BackgroundColor = [0.149 0.149 0.149];
+            app.mVdivButtonDown_100.FontColor = [1 1 1];
+            app.mVdivButtonDown_100.Position = [10 80 80 20];
 
-            % Create mVdivButton_6
-            app.mVdivButton_6 = uitogglebutton(app.DownstreamSensibilityButtonGroup);
-            app.mVdivButton_6.Text = '200mV/div';
-            app.mVdivButton_6.BackgroundColor = [0.149 0.149 0.149];
-            app.mVdivButton_6.FontColor = [1 1 1];
-            app.mVdivButton_6.Position = [10 60 80 20];
+            % Create mVdivButtonDown_200
+            app.mVdivButtonDown_200 = uitogglebutton(app.DownstreamSensibilityButtonGroup);
+            app.mVdivButtonDown_200.Text = '200mV/div';
+            app.mVdivButtonDown_200.BackgroundColor = [0.149 0.149 0.149];
+            app.mVdivButtonDown_200.FontColor = [1 1 1];
+            app.mVdivButtonDown_200.Position = [10 60 80 20];
 
-            % Create mVdivButton_7
-            app.mVdivButton_7 = uitogglebutton(app.DownstreamSensibilityButtonGroup);
-            app.mVdivButton_7.Text = '500mV/div';
-            app.mVdivButton_7.BackgroundColor = [0.149 0.149 0.149];
-            app.mVdivButton_7.FontColor = [1 1 1];
-            app.mVdivButton_7.Position = [10 40 80 20];
+            % Create mVdivButtonDown_500
+            app.mVdivButtonDown_500 = uitogglebutton(app.DownstreamSensibilityButtonGroup);
+            app.mVdivButtonDown_500.Text = '500mV/div';
+            app.mVdivButtonDown_500.BackgroundColor = [0.149 0.149 0.149];
+            app.mVdivButtonDown_500.FontColor = [1 1 1];
+            app.mVdivButtonDown_500.Position = [10 40 80 20];
 
-            % Create AutosetButton
-            app.AutosetButton = uitogglebutton(app.DownstreamSensibilityButtonGroup);
-            app.AutosetButton.Text = 'Auto set';
-            app.AutosetButton.BackgroundColor = [0.149 0.149 0.149];
-            app.AutosetButton.FontColor = [1 1 1];
-            app.AutosetButton.Position = [10 10 80 30];
+            % Create AutosetDownstreamScopeButton
+            app.AutosetDownstreamScopeButton = uibutton(app.UIFigure, 'push');
+            app.AutosetDownstreamScopeButton.ButtonPushedFcn = createCallbackFcn(app, @AutosetDownstreamScopeButtonPushed, true);            
+            app.AutosetDownstreamScopeButton.Text = 'Auto set';
+            app.AutosetDownstreamScopeButton.BackgroundColor = [0.149 0.149 0.149];
+            app.AutosetDownstreamScopeButton.FontColor = [1 1 1];
+            app.AutosetDownstreamScopeButton.Position = [495,25,80,30];
 
             % Create SetOscilloscopeSensibilityLabel
             app.SetOscilloscopeSensibilityLabel = uilabel(app.UIFigure);
@@ -854,7 +715,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
 
             % Create LightModeButton
             app.LightModeButton = uibutton(app.UIFigure, 'push');
-            app.LightModeButton.ButtonPushedFcn = createCallbackFcn(app, @DarkLightModePressed, true);
+            app.LightModeButton.ButtonPushedFcn = createCallbackFcn(app, @DarkLightModePushed, true);
             app.LightModeButton.WordWrap = 'on';
             app.LightModeButton.BackgroundColor = [0.9294 0.6941 0.1255];
             app.LightModeButton.FontSize = 16;
@@ -883,34 +744,34 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.UpstreamSensibilityButtonGroup.BackgroundColor = [0.149 0.149 0.149];
             app.UpstreamSensibilityButtonGroup.Position = [585 15 100 210];
 
-            % Create mVdivButton_8
-            app.mVdivButton_8 = uitogglebutton(app.UpstreamSensibilityButtonGroup);
-            app.mVdivButton_8.Text = '5mV/div';
-            app.mVdivButton_8.BackgroundColor = [0.149 0.149 0.149];
-            app.mVdivButton_8.FontColor = [1 1 1];
-            app.mVdivButton_8.Position = [11 160 80 20];
-            app.mVdivButton_8.Value = true;
+            % Create mVdivButtonUp_5
+            app.mVdivButtonUp_5 = uitogglebutton(app.UpstreamSensibilityButtonGroup);
+            app.mVdivButtonUp_5.Text = '5mV/div';
+            app.mVdivButtonUp_5.BackgroundColor = [0.149 0.149 0.149];
+            app.mVdivButtonUp_5.FontColor = [1 1 1];
+            app.mVdivButtonUp_5.Position = [11 160 80 20];
+            app.mVdivButtonUp_5.Value = true;
 
-            % Create mVdivButton_9
-            app.mVdivButton_9 = uitogglebutton(app.UpstreamSensibilityButtonGroup);
-            app.mVdivButton_9.Text = '10mV/div';
-            app.mVdivButton_9.BackgroundColor = [0.149 0.149 0.149];
-            app.mVdivButton_9.FontColor = [1 1 1];
-            app.mVdivButton_9.Position = [11 140 80 20];
+            % Create mVdivButtonUp_10
+            app.mVdivButtonUp_10 = uitogglebutton(app.UpstreamSensibilityButtonGroup);
+            app.mVdivButtonUp_10.Text = '10mV/div';
+            app.mVdivButtonUp_10.BackgroundColor = [0.149 0.149 0.149];
+            app.mVdivButtonUp_10.FontColor = [1 1 1];
+            app.mVdivButtonUp_10.Position = [11 140 80 20];
 
-            % Create mVdivButton_10
-            app.mVdivButton_10 = uitogglebutton(app.UpstreamSensibilityButtonGroup);
-            app.mVdivButton_10.Text = '20mV/div';
-            app.mVdivButton_10.BackgroundColor = [0.149 0.149 0.149];
-            app.mVdivButton_10.FontColor = [1 1 1];
-            app.mVdivButton_10.Position = [11 120 80 20];
+            % Create mVdivButtonUp_20
+            app.mVdivButtonUp_20 = uitogglebutton(app.UpstreamSensibilityButtonGroup);
+            app.mVdivButtonUp_20.Text = '20mV/div';
+            app.mVdivButtonUp_20.BackgroundColor = [0.149 0.149 0.149];
+            app.mVdivButtonUp_20.FontColor = [1 1 1];
+            app.mVdivButtonUp_20.Position = [11 120 80 20];
 
-            % Create mVdivButton_11
-            app.mVdivButton_11 = uitogglebutton(app.UpstreamSensibilityButtonGroup);
-            app.mVdivButton_11.Text = '50mV/div';
-            app.mVdivButton_11.BackgroundColor = [0.149 0.149 0.149];
-            app.mVdivButton_11.FontColor = [1 1 1];
-            app.mVdivButton_11.Position = [11 100 80 20];
+            % Create mVdivButtonUp_50
+            app.mVdivButtonUp_50 = uitogglebutton(app.UpstreamSensibilityButtonGroup);
+            app.mVdivButtonUp_50.Text = '50mV/div';
+            app.mVdivButtonUp_50.BackgroundColor = [0.149 0.149 0.149];
+            app.mVdivButtonUp_50.FontColor = [1 1 1];
+            app.mVdivButtonUp_50.Position = [11 100 80 20];
 
             % Create mVdivButton_12
             app.mVdivButton_12 = uitogglebutton(app.UpstreamSensibilityButtonGroup);
@@ -920,11 +781,11 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.mVdivButton_12.Position = [11 80 80 20];
 
             % Create mVdivButton_13
-            app.mVdivButton_13 = uitogglebutton(app.UpstreamSensibilityButtonGroup);
-            app.mVdivButton_13.Text = '200mV/div';
-            app.mVdivButton_13.BackgroundColor = [0.149 0.149 0.149];
-            app.mVdivButton_13.FontColor = [1 1 1];
-            app.mVdivButton_13.Position = [11 60 80 20];
+            app.mVdivButtonUp_10 = uitogglebutton(app.UpstreamSensibilityButtonGroup);
+            app.mVdivButtonUp_10.Text = '200mV/div';
+            app.mVdivButtonUp_10.BackgroundColor = [0.149 0.149 0.149];
+            app.mVdivButtonUp_10.FontColor = [1 1 1];
+            app.mVdivButtonUp_10.Position = [11 60 80 20];
 
             % Create mVdivButton_14
             app.mVdivButton_14 = uitogglebutton(app.UpstreamSensibilityButtonGroup);
@@ -933,12 +794,13 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.mVdivButton_14.FontColor = [1 1 1];
             app.mVdivButton_14.Position = [11 40 80 20];
 
-            % Create AutosetButton_2
-            app.AutosetButton_2 = uitogglebutton(app.UpstreamSensibilityButtonGroup);
-            app.AutosetButton_2.Text = 'Auto set';
-            app.AutosetButton_2.BackgroundColor = [0.149 0.149 0.149];
-            app.AutosetButton_2.FontColor = [1 1 1];
-            app.AutosetButton_2.Position = [11 10 80 30];
+            % Create AutosetUpstreamScopeButton
+            app.AutosetUpstreamScopeButton = uibutton(app.UIFigure, 'push');
+            app.AutosetUpstreamScopeButton.ButtonPushedFcn = createCallbackFcn(app, @AutosetUpstreamScopeButtonPushed, true);            
+            app.AutosetUpstreamScopeButton.Text = 'Auto set';
+            app.AutosetUpstreamScopeButton.BackgroundColor = [0.149 0.149 0.149];
+            app.AutosetUpstreamScopeButton.FontColor = [1 1 1];
+            app.AutosetUpstreamScopeButton.Position = [596,25,80,30];
 
             % Create CalibrateButton
             app.CalibrateButton = uibutton(app.UIFigure, 'push');
@@ -955,7 +817,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.MeasurementLabel = uilabel(app.UIFigure);
             app.MeasurementLabel.FontSize = 14;
             app.MeasurementLabel.FontColor = [1 1 1];
-            app.MeasurementLabel.Position = [488 257 197 78];
+            app.MeasurementLabel.Position = [485 257 200 78];
             app.MeasurementLabel.Text = {'Measurement number: '; 'Charge Gun: '; 'Charge (THz): '; 'Chage (THz2):'};
 
             % Create OnOffRockerSwitch

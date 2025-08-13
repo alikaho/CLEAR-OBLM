@@ -63,27 +63,22 @@ function Autoset_oscilloscope(app, channel)
                 
     elseif range <= 2000
         matlabJapc.staticSetSignal('SCT.USER.SETUP',[channel, '/Sensibility#value'], 2)
+        if strcmp(channel, 'CA.SCOPE10.CH02')
+            app.DownstreamSensibilityButtonGroup.SelectedObject = app.mVdivButton_6; % depress the 200mV/div button downstream
+        elseif strcmp(channel, 'CA.SCOPE10.CH01')
+            app.UpstreamSensibilityButtonGroup.SelectedObject = app.mVdivButton_13; % depress the 200mV/div button upstream
+        end
                 
     else
         matlabJapc.staticSetSignal('SCT.USER.SETUP',[channel, '/Sensibility#value'], 5)
+        if strcmp(channel, 'CA.SCOPE10.CH02')
+            app.DownstreamSensibilityButtonGroup.SelectedObject = app.mVdivButton_7; % depress the 500mV/div button downstream
+        elseif strcmp(channel, 'CA.SCOPE10.CH01')
+            app.UpstreamSensibilityButtonGroup.SelectedObject = app.mVdivButton_14; % depress the 500mV/div button upstream
+        end
                 
     end
-      
-
-    % Depress the corresponding sensibility button
-    if strcmp(channel, 'CA.SCOPE10.CH02') % downstream
-        sensibility_down = matlabJapc.staticGetSignal('SCT.USER.SETUP','CA.SCOPE10.CH02/Sensibility#value'); % checks what the downstream sensibility is set to
-        button_down_number = sensibility_down * 100 ;
-        button_down_name = ['mVdivButtonDown_' num2str(button_down_number)];
-        app.DownstreamSensibilityButtonGroup.SelectedObject = app.(button_down_name);
-
-    elseif strcmp(channel, 'CA.SCOPE10.CH01') % upstream
-        sensibility_up = matlabJapc.staticGetSignal('SCT.USER.SETUP','CA.SCOPE10.CH01/Sensibility#value'); % checks what the upstream sensibility is set to
-        button_up_number = sensibility_up * 100 ;
-        button_up_name = ['mVdivButtonUp_' num2str(button_up_number)];
-        app.UpstreamSensibilityButtonGroup.SelectedObject = app.(button_up_name);
-    end
-
+    
     pause(1)
     disp('Sensibility chosen')
     disp('Autoset of scope settings complete.')
