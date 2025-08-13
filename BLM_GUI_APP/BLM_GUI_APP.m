@@ -96,7 +96,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             if ~isvalid(app)
                 return
             end
-
+            
             [Gun_charge, ~, THz_charge, THz2_charge] = Read_BCM; % Read_BCM gets the charge at the gun, THz and THz2. 
 
             total_beam_length = 36.38;
@@ -108,7 +108,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
 
                 display(['Meas: ', num2str(app.idx_meas), ' Charge Gun: ', num2str(round(Gun_charge,3)),' Charge THz: ', num2str(round(THz_charge,3)),' Charge THz2: ', num2str(round(THz2_charge,3))])
                 % disp(['Meas: ' num2str(app.idx_meas)])
-  
+
                 time_plot = linspace(0, app.total_time, app.time_pts); % time points for plotting, determined by the total time shown and the amount of time points we take.
                 % for faster plotting, can use a lower app.time_pts
 
@@ -424,7 +424,7 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
             app.monitorMTV.stop()
             app.OnOffRockerSwitch.Value = 'Stop';
 
-            [filename, pathname] = uigetfile('*.txt', 'Select saved data file:');
+            [filename, pathname] = uigetfile('*.txt', 'Select saved data file (.txt only):');
             
             if isequal(filename,0) || isequal(pathname, 0) % if user cancels the file choosing
                 disp('File selection canceled')
@@ -432,11 +432,11 @@ classdef BLM_GUI_APP < matlab.apps.AppBase
                 return
             end
 
-            app.dry_run = true;
-
             app.saved_data_filename = filename;
             app.saved_data_pathname = pathname;
 
+            app.dry_run = true;
+            app.OnOffRockerSwitch.Value = 'Start';
             app.monitorMTV.start()
 
         end
